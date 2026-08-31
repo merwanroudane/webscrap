@@ -2,10 +2,16 @@
 
 **Developed by Dr Merwan Roudane** · <merwanroudane920@gmail.com> · <https://github.com/merwanroudane>
 
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://webscrapapp.streamlit.app/)
 ![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-4F86F7)
 ![Streamlit](https://img.shields.io/badge/UI-Streamlit-57C7A5)
 ![Tests](https://img.shields.io/badge/tests-92%20passing-57C7A5)
 ![Licence](https://img.shields.io/badge/licence-MIT-F2B84B)
+
+### ▶ Use it now: **<https://webscrapapp.streamlit.app/>**
+
+No installation, no account, no API key. Open the link, click **Try the built-in
+demo**, and you have a dataset in about a minute.
 
 Turn web pages into analysis-ready research datasets — without writing code.
 
@@ -72,6 +78,17 @@ engine inventory — are shown in the [user guide](docs/USER_GUIDE.md).
 ---
 
 ## Quick start
+
+### Option A — use the hosted app
+
+<https://webscrapapp.streamlit.app/> — nothing to install. Best for trying the
+tool, teaching, or a quick one-off dataset.
+
+### Option B — run it locally
+
+Recommended for real research work: your data stays on your machine, runs are
+saved in `runs/`, and you can add the optional browser engine for
+JavaScript-heavy sites.
 
 ```bash
 git clone https://github.com/merwanroudane/webscrap.git

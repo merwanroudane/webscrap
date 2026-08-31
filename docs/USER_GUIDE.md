@@ -32,7 +32,19 @@ Developed by **Dr Merwan Roudane** · <https://github.com/merwanroudane>
 
 ## 1. Install and start
 
-### Install
+### The quickest start: use the hosted app
+
+**<https://webscrapapp.streamlit.app/>**
+
+Nothing to install and no account needed. Everything in this guide applies to it,
+with two differences: browser rendering and PDF extraction are unavailable
+there, and your runs are not kept between visits — download what you need before
+you close the tab.
+
+For regular research work, install it locally instead: your data stays on your
+machine, run history is preserved, and every engine is available.
+
+### Install locally
 
 You need Python 3.11 or newer (3.12 recommended). Open a terminal and run:
 
@@ -560,8 +572,10 @@ optional layer for naming fields when you ask for it, and any run that would use
 an AI or cloud service says so on the preflight card first.
 
 **Where is my data stored?**
-On your computer, under `runs/<run_id>/`. Nothing is uploaded anywhere unless
-you explicitly enable a cloud provider.
+When you run it locally, on your computer under `runs/<run_id>/`. Nothing is
+uploaded anywhere unless you explicitly enable a cloud provider. On the hosted
+app at <https://webscrapapp.streamlit.app/> the workspace is temporary, so
+download your dataset or the research package before leaving the page.
 
 **How large a dataset can it handle?**
 Comfortably tens of thousands of rows in the interface. Beyond that, export to

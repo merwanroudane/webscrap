@@ -41,6 +41,8 @@ CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0
 
 ## Streamlit Community Cloud
 
+**Live instance: <https://webscrapapp.streamlit.app/>**
+
 The deterministic core runs well there. Browser rendering and the heavier
 optional engines are not suitable (binary size and memory), and the app is built
 to work without them.
