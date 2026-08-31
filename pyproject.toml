@@ -8,37 +8,29 @@ authors = [{ name = "Merwan Roudane", email = "merwanroudane920@gmail.com" }]
 maintainers = [{ name = "Merwan Roudane", email = "merwanroudane920@gmail.com" }]
 license = { text = "MIT" }
 dependencies = [
+  # Kept in step with requirements.txt: only what the application imports.
   "streamlit",
-  "pandas",
-  "polars",
-  "numpy",
-  "pyarrow",
-  "duckdb",
-  "requests",
-  "httpx[http2]",
-  "aiohttp",
-  "beautifulsoup4",
+  "pydantic>=2",
+  "python-dotenv",
+  "pyyaml",
+  "httpx",
   "lxml",
-  "parsel",
-  "selectolax",
+  "cssselect",
   "trafilatura",
   "extruct",
   "feedparser",
-  "jmespath",
-  "jsonpath-ng",
-  "pydantic>=2",
-  "pandera[pandas]",
-  "tenacity",
-  "python-dotenv",
-  "orjson",
   "protego",
+  "pandas",
+  "numpy",
+  "pyarrow",
+  "duckdb",
+  "pandera[pandas]",
   "openpyxl",
   "xlsxwriter",
+  "pyreadstat",
+  "pyreadr",
   "plotly",
   "networkx",
-  "pyyaml",
-  "python-dateutil",
-  "tldextract",
 ]
 
 [project.urls]
@@ -52,7 +44,7 @@ modern = ["crawl4ai", "scrapling[fetchers]"]
 cloud = ["firecrawl-py", "scrapegraph-py>=2.1.0", "agentql", "zyte-api", "apify"]
 agents = ["stagehand", "browser-use", "skyvern"]
 documents = ["docling", "pymupdf"]
-research = ["pyreadstat", "pyreadr", "kaleido", "pytablewriter"]
+research = ["kaleido", "pytablewriter"]
 dev = [
   "pytest",
   "pytest-asyncio",

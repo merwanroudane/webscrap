@@ -75,8 +75,13 @@ class FixtureServer:
         self._thread = threading.Thread(target=self._server.serve_forever, daemon=True)
 
     @property
-    def base_url(self) -> str:
+    def address(self) -> tuple[str, int]:
         host, port = self._server.server_address[:2]
+        return str(host), int(port)
+
+    @property
+    def base_url(self) -> str:
+        host, port = self.address
         return f"http://{host}:{port}"
 
     def url(self, path: str) -> str:

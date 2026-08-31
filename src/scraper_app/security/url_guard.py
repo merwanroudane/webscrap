@@ -111,8 +111,13 @@ def guard_url(raw: str, policy: SecurityPolicy | None = None) -> GuardedUrl:
         raise UrlBlocked(ErrorCode.URL_INVALID, f"Port {port} is not allowed.")
 
     lowered = host.lower()
+    # An explicitly allowed host:port (the bundled demo server) skips only the
+    # non-public-address rule; every other check above and below still applies.
+    explicitly_allowed = f"{lowered}:{port}" in policy.allow_hosts
+    permit_private = policy.allow_private_networks or explicitly_allowed
+
     if lowered in _BLOCKED_HOST_NAMES or lowered.endswith(_BLOCKED_HOST_SUFFIXES):
-        if not policy.allow_private_networks:
+        if not permit_private:
             raise UrlBlocked(ErrorCode.URL_PRIVATE_NETWORK_BLOCKED, host)
     if lowered in policy.metadata_hosts:
         raise UrlBlocked(ErrorCode.URL_PRIVATE_NETWORK_BLOCKED, "Cloud metadata endpoint.")
@@ -131,7 +136,7 @@ def guard_url(raw: str, policy: SecurityPolicy | None = None) -> GuardedUrl:
         if addr in policy.metadata_hosts:
             raise UrlBlocked(ErrorCode.URL_PRIVATE_NETWORK_BLOCKED, "Cloud metadata endpoint.")
         ip = ipaddress.ip_address(addr)
-        if not _is_public_ip(ip) and not policy.allow_private_networks:
+        if not _is_public_ip(ip) and not permit_private:
             raise UrlBlocked(
                 ErrorCode.URL_PRIVATE_NETWORK_BLOCKED,
                 f"{host} resolves to the non-public address {addr}.",

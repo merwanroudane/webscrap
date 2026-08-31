@@ -8,7 +8,7 @@ constants. Values may be overridden through environment variables (see
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -91,6 +91,9 @@ class SecurityPolicy:
     allow_private_networks: bool = _bool_env("SRWS_ALLOW_PRIVATE_NETWORKS", False)
     allow_userinfo: bool = False
     blocked_ports: frozenset[int] = frozenset({22, 23, 25, 445, 3306, 5432, 6379, 9200, 11211})
+    #: Exact ``host:port`` entries exempt from the non-public-address rule.
+    #: Used only by the bundled offline demo; every other guard stays in force.
+    allow_hosts: frozenset[str] = frozenset()
     metadata_hosts: frozenset[str] = frozenset(
         {
             "169.254.169.254",
@@ -174,6 +177,24 @@ def has_credentials(provider: str) -> bool:
     """True when every environment variable a provider needs is present."""
     keys = PROVIDER_ENV_KEYS.get(provider, [])
     return bool(keys) and all(os.getenv(k, "").strip() for k in keys)
+
+
+def allow_host(hostport: str) -> None:
+    """Exempt one exact ``host:port`` from the non-public-address rule.
+
+    This exists for the bundled offline demo, which serves fixtures from
+    127.0.0.1. It is deliberately narrow: the scheme, userinfo, port and
+    metadata checks all still apply, and no other private address is reachable.
+    A public deployment therefore stays protected even while the demo runs.
+    """
+    policy = SETTINGS.security
+    if hostport in policy.allow_hosts:
+        return
+    object.__setattr__(
+        SETTINGS,
+        "security",
+        replace(policy, allow_hosts=frozenset({*policy.allow_hosts, hostport})),
+    )
 
 
 def ensure_dirs() -> None:

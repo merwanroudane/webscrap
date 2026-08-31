@@ -1,0 +1,44 @@
+# Smart Research Web Scraper — core dependencies.
+#
+# This is the manifest Streamlit Community Cloud uses (requirements.txt takes
+# precedence over pyproject.toml in its search order). It lists only what the
+# application actually imports, so a cloud install stays fast and reliable.
+#
+# Optional engines are NOT here on purpose — the app runs fully without them
+# and reports them honestly in Settings -> Engines & keys:
+#   playwright   browser rendering + network API discovery
+#   crawl4ai     local adaptive engine
+#   pymupdf      PDF/document extraction
+#   firecrawl-py hosted extraction (also needs FIRECRAWL_API_KEY)
+
+# --- application ---
+streamlit
+pydantic>=2
+python-dotenv
+pyyaml
+
+# --- HTTP and parsing ---
+httpx
+lxml
+cssselect
+trafilatura
+extruct
+feedparser
+protego
+
+# --- data ---
+pandas
+numpy
+pyarrow
+duckdb
+pandera[pandas]
+
+# --- exports ---
+openpyxl
+xlsxwriter
+pyreadstat
+pyreadr
+
+# --- visualisation ---
+plotly
+networkx

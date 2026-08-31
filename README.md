@@ -77,7 +77,7 @@ engine inventory — are shown in the [user guide](docs/USER_GUIDE.md).
 git clone https://github.com/merwanroudane/webscrap.git
 cd webscrap
 python -m venv .venv && .venv\Scripts\activate      # Windows
-pip install -r requirements-core.txt
+pip install -r requirements.txt
 streamlit run app.py
 ```
 
@@ -91,7 +91,7 @@ With `uv` (recommended — it installs Python 3.12 for you):
 git clone https://github.com/merwanroudane/webscrap.git
 cd webscrap
 uv venv --python 3.12
-uv pip install -r requirements-core.txt
+uv pip install -r requirements.txt
 uv run streamlit run app.py
 ```
 
@@ -113,7 +113,7 @@ pip install playwright && playwright install chromium   # browser rendering + ne
 pip install crawl4ai && crawl4ai-setup                  # local adaptive engine
 pip install pymupdf                                     # PDF/document extraction
 pip install firecrawl-py                                # hosted extraction (needs FIRECRAWL_API_KEY)
-pip install pyreadstat pyreadr                          # SPSS/R exports (already in requirements-core)
+pip install kaleido                                     # export charts as PNG/SVG/PDF
 ```
 
 Environment variables live in `.env` — copy `.env.example` and fill in only what
