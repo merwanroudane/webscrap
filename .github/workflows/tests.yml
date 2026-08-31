@@ -45,7 +45,9 @@ jobs:
         env:
           SRWS_ALLOW_PRIVATE_NETWORKS: "true"
           SRWS_REQUESTS_PER_SECOND: "50"
-        run: uv run pytest -q --cov=src/scraper_app --cov-report=term-missing
+        # A floor, not a target: it exists so coverage cannot quietly fall.
+        # Raise it when real coverage rises; never lower it to make CI pass.
+        run: uv run pytest -q --cov=src/scraper_app --cov-report=term-missing --cov-fail-under=55
 
   core-only:
     name: startup without optional engines
@@ -67,9 +69,33 @@ jobs:
         run: uv run python scripts/sync_env_example.py --check
 
   lockfile:
-    name: uv.lock is current
+    name: uv.lock is the single source of truth
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
-      - run: uv lock --check
+
+      - name: The lockfile matches pyproject.toml
+        run: uv lock --check
+
+      # Streamlit Community Cloud reads uv.lock before requirements.txt, so the
+      # two must never describe different environments.
+      - name: requirements.txt is exported from the lockfile
+        run: uv run --no-project python scripts/sync_requirements.py --check
+
+  locked-environment:
+    name: the locked environment actually runs the app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      # Installing from the lockfile is what the deployment does; testing the
+      # loose resolution only would leave that path unverified.
+      - name: Install the locked environment
+        run: uv sync --locked --no-dev
+
+      - name: The application imports and its engines register
+        run: uv run python scripts/check_core_only.py

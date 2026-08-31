@@ -178,37 +178,82 @@ class ScrapyEngine(_CrawlerEngineBase):
             request, pages, candidate, started, logger, {"framework": "scrapy", "urls": len(urls)}
         )
 
+    def spider_settings(self, request: ExtractionRequest) -> dict[str, Any]:
+        """Scrapy settings derived from this application's politeness limits."""
+        return {
+            "LOG_ENABLED": False,
+            "ROBOTSTXT_OBEY": request.respect_robots,
+            "DOWNLOAD_DELAY": 1.0 / max(SETTINGS.politeness.requests_per_second, 0.1),
+            "CONCURRENT_REQUESTS_PER_DOMAIN": SETTINGS.politeness.concurrency_per_host,
+            "USER_AGENT": SETTINGS.user_agent,
+            "RETRY_TIMES": SETTINGS.politeness.max_retries,
+            "DOWNLOAD_MAXSIZE": SETTINGS.limits.max_html_bytes,
+            "TELNETCONSOLE_ENABLED": False,
+        }
+
     def _crawl(
         self, urls: list[str], request: ExtractionRequest, progress
-    ) -> list[tuple[str, str]]:  # pragma: no cover - optional dependency
-        """Run a single-process Scrapy crawl and collect (url, html)."""
-        import scrapy
-        from scrapy.crawler import CrawlerProcess
+    ) -> list[tuple[str, str]]:
+        """Run the crawl in a subprocess and collect (url, html).
 
-        collected: list[tuple[str, str]] = []
-        delay = 1.0 / max(SETTINGS.politeness.requests_per_second, 0.1)
+        Scrapy runs on Twisted, whose reactor cannot be restarted after it
+        stops. Running it in-process would work for the first extraction and
+        raise ``ReactorNotRestartable`` for every one after it, so each crawl
+        gets its own interpreter instead. See ``_scrapy_worker.py``.
+        """
+        import json
+        import subprocess  # noqa: S404 - fixed argv, no shell, no user input
+        import sys
+        import tempfile
+        from pathlib import Path
 
-        class _CollectSpider(scrapy.Spider):
-            name = "srws_collect"
-            start_urls = list(urls)
-            custom_settings = {
-                "LOG_ENABLED": False,
-                "ROBOTSTXT_OBEY": request.respect_robots,
-                "DOWNLOAD_DELAY": delay,
-                "CONCURRENT_REQUESTS_PER_DOMAIN": SETTINGS.politeness.concurrency_per_host,
-                "USER_AGENT": SETTINGS.user_agent,
-                "RETRY_TIMES": SETTINGS.politeness.max_retries,
-                "DOWNLOAD_MAXSIZE": SETTINGS.limits.max_html_bytes,
-                "TELNETCONSOLE_ENABLED": False,
-            }
+        worker = Path(__file__).with_name("_scrapy_worker.py")
+        timeout = max(60.0, SETTINGS.limits.http_timeout * max(len(urls), 1) * 2)
 
-            def parse(self, response):  # noqa: D401
-                collected.append((response.url, response.text))
+        with tempfile.TemporaryDirectory(prefix="srws-scrapy-") as directory:
+            config_path = Path(directory) / "config.json"
+            output_path = Path(directory) / "pages.json"
+            config_path.write_text(
+                json.dumps(
+                    {
+                        "urls": list(urls),
+                        "output": str(output_path),
+                        "settings": self.spider_settings(request),
+                        "max_bytes": SETTINGS.limits.max_html_bytes,
+                    }
+                ),
+                encoding="utf-8",
+            )
 
-        process = CrawlerProcess(settings={"LOG_ENABLED": False})
-        process.crawl(_CollectSpider)
-        process.start()  # blocks until the crawl finishes
-        return collected
+            try:
+                completed = subprocess.run(  # noqa: S603 - argv is built here, shell=False
+                    [sys.executable, str(worker), str(config_path)],
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout,
+                    check=False,
+                )
+            except subprocess.TimeoutExpired as exc:
+                raise ScraperError(
+                    ErrorCode.TIMEOUT,
+                    f"The Scrapy crawl did not finish within {int(timeout)} seconds.",
+                ) from exc
+
+            if not output_path.exists():
+                detail = (completed.stderr or completed.stdout or "").strip()[-500:]
+                raise ScraperError(
+                    ErrorCode.INTERNAL,
+                    "The Scrapy subprocess exited without producing a result.",
+                    {"detail": detail},
+                )
+            payload = json.loads(output_path.read_text(encoding="utf-8"))
+
+        if payload.get("error") and not payload.get("pages"):
+            raise ScraperError(
+                ErrorCode.INTERNAL,
+                f"Scrapy failed: {payload['error']}",
+            )
+        return [(str(url), str(html)) for url, html in payload.get("pages", [])]
 
 
 class CrawleeEngine(_CrawlerEngineBase):
@@ -261,9 +306,9 @@ class CrawleeEngine(_CrawlerEngineBase):
     def _crawl(
         self, urls: list[str]
     ) -> list[tuple[str, str]]:  # pragma: no cover - optional dependency
-        import asyncio
-
         from crawlee.crawlers import HttpCrawler  # type: ignore
+
+        from ..async_runner import run_async_safely
 
         collected: list[tuple[str, str]] = []
 
@@ -280,7 +325,7 @@ class CrawleeEngine(_CrawlerEngineBase):
 
             await crawler.run(urls)
 
-        asyncio.run(run())
+        run_async_safely(run)
         return collected
 
 

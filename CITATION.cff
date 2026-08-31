@@ -1,0 +1,40 @@
+cff-version: 1.2.0
+title: Smart Research Web Scraper
+message: >-
+  If you use this software to collect data for a publication, please cite it and
+  attach the provenance manifest and extraction recipe that the run produced.
+type: software
+authors:
+  - given-names: Merwan
+    family-names: Roudane
+    email: merwanroudane920@gmail.com
+    orcid: null
+repository-code: https://github.com/merwanroudane/webscrap
+url: https://webscrapapp.streamlit.app/
+abstract: >-
+  A research-oriented web data acquisition tool for people who do not program.
+  It profiles a source, prefers deterministic extraction over language models,
+  refuses private and metadata network addresses, respects robots.txt, and emits
+  a provenance manifest, a data dictionary and a re-runnable extraction recipe
+  alongside every dataset, so that a published result can be reproduced.
+keywords:
+  - web scraping
+  - research data
+  - reproducibility
+  - provenance
+  - data collection
+  - streamlit
+license: MIT
+version: 0.2.0
+date-released: '2026-08-31'
+preferred-citation:
+  type: software
+  title: 'Smart Research Web Scraper: reproducible web data collection for researchers'
+  authors:
+    - given-names: Merwan
+      family-names: Roudane
+      email: merwanroudane920@gmail.com
+  version: 0.2.0
+  year: 2026
+  url: https://github.com/merwanroudane/webscrap
+  license: MIT

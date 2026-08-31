@@ -14,12 +14,12 @@ and, when a model was used, which provider saw the content.
 
 from __future__ import annotations
 
-import asyncio
 import time
 from typing import Any
 
 from ..ai import service as ai_service
 from ..ai.base import AIMode
+from ..async_runner import run_async_safely
 from ..config import SETTINGS
 from ..exceptions import ErrorCode, ScraperError
 from ..logging_config import RunLogger
@@ -79,7 +79,7 @@ class Crawl4aiEngine(BaseEngine):
             )
 
         guarded = guard_url(request.url)
-        rendered = asyncio.run(self._run(guarded.url))
+        rendered = run_async_safely(lambda: self._run(guarded.url))
         html = rendered.get("html") or ""
         markdown = rendered.get("markdown") or ""
         if not html and not markdown:

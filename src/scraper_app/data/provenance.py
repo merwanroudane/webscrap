@@ -24,6 +24,45 @@ from ..models import (
 )
 from ..security.secrets import sanitize_url, strip_secrets
 
+#: Which provider registry an engine's ``metadata["provider"]`` belongs to.
+#: Used only to label provenance; it never affects behaviour.
+_ENGINE_CATEGORY = {
+    "remote_browser": "remote_browser",
+    "managed_fetch": "managed_fetch",
+    "semantic_content": "semantic_content",
+    "document": "document",
+    "firecrawl": "managed_fetch",
+    "agentql": "managed_fetch",
+    "scrapegraph": "managed_fetch",
+}
+
+
+def _external_services(result: ExtractionResult) -> dict[str, str | None]:
+    """Name the external services a run used, without naming any credential.
+
+    A methods section has to be able to say *which* service saw the query and
+    which model produced a column. ``engine`` alone cannot answer that, because
+    one engine fronts many vendors (audit v0.2 section 60).
+    """
+    metadata = result.metadata or {}
+    provider_id = metadata.get("provider") or None
+    category = _ENGINE_CATEGORY.get(result.engine) or (
+        _ENGINE_CATEGORY.get(str(provider_id)) if provider_id else None
+    )
+
+    return {
+        "provider_id": str(provider_id) if provider_id else None,
+        "provider_category": category,
+        "ai_provider": (str(metadata["ai_provider"]) if metadata.get("ai_provider") else None),
+        "ai_model": str(metadata["ai_model"]) if metadata.get("ai_model") else None,
+        "remote_browser_provider": (
+            str(provider_id) if provider_id and category == "remote_browser" else None
+        ),
+        "managed_fetch_provider": (
+            str(provider_id) if provider_id and category == "managed_fetch" else None
+        ),
+    }
+
 
 def build(
     *,
@@ -63,6 +102,7 @@ def build(
         cleaning_operations=list(cleaning_operations or []),
         used_ai=bool(decision.uses_ai) if decision else False,
         used_cloud_provider=(result.engine if decision and decision.uses_cloud else None),
+        **_external_services(result),
     )
 
 

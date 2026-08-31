@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import os
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -105,6 +106,13 @@ class ProviderDescriptor:
     blocked_reason: str = ""
     notes: str = ""
 
+    #: Optional override for providers whose readiness is not "package present
+    #: and every env_key set" — LiteLLM, for instance, needs *one* of several
+    #: keys, and which one depends on the model it resolves to. Delegating
+    #: keeps this registry and the provider's own availability() from drifting
+    #: apart (audit v0.2 section 27).
+    state_resolver: Callable[[], ProviderState] | None = field(default=None, repr=False)
+
     def credentials_present(self) -> bool:
         return all(os.getenv(key, "").strip() for key in self.env_keys) if self.env_keys else True
 
@@ -118,6 +126,14 @@ class ProviderDescriptor:
             return False
 
     def state(self) -> ProviderState:
+        if self.implemented and self.state_resolver is not None:
+            if not self.package_present():
+                return ProviderState(
+                    ProviderStatus.OPTIONAL,
+                    f"The optional package '{self.package}' is not installed.",
+                    self.install_hint or (f"pip install {self.package}" if self.package else ""),
+                )
+            return self.state_resolver()
         if not self.implemented:
             return ProviderState(
                 ProviderStatus.BLOCKED if self.blocked_reason else ProviderStatus.CATALOGUE,

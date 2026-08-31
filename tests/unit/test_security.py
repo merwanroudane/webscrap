@@ -153,3 +153,75 @@ def test_challenge_and_login_detection():
     assert content_safety.detect_challenge("<p>Checking your browser before access</p>")
     assert content_safety.detect_login_wall("<div>Please log in to continue</div>")
     assert not content_safety.detect_challenge("<p>Inflation table</p>")
+
+
+# ------------------------------------------------- vendor keys in query params
+# Audit v0.2 section 39. Several managed scraping APIs take the key as a query
+# parameter rather than a header. That is their design, but it means the key
+# rides inside a URL string that could easily end up in a log line, an error
+# message, a recipe or a provenance manifest. These tests hold that line.
+def _managed_call(provider_id: str, key: str):
+    """Build one provider's outgoing request without sending it."""
+    import os
+
+    from scraper_app.providers import managed_fetch
+    from scraper_app.providers.managed_fetch import FetchRequest
+
+    provider = managed_fetch.get_provider(provider_id)
+    assert provider is not None, provider_id
+    for name in provider.descriptor.env_keys:
+        os.environ[name] = key
+    try:
+        return provider.build(FetchRequest(url="https://example.org/data"))
+    finally:
+        for name in provider.descriptor.env_keys:
+            os.environ.pop(name, None)
+
+
+def test_managed_providers_that_use_query_params_are_known():
+    """Confirm the risk is real before asserting it is contained."""
+    from scraper_app.providers import managed_fetch
+
+    key = "sk-live-secret-000111222333"
+    in_params = []
+    for provider in managed_fetch.providers():
+        if not provider.descriptor.env_keys:
+            continue
+        call = _managed_call(provider.id, key)
+        if key in str(call.params or {}):
+            in_params.append(provider.id)
+    assert in_params, "expected at least one provider to send its key as a parameter"
+
+
+def test_a_key_in_a_query_param_never_reaches_a_log_or_recipe():
+    from scraper_app.providers import managed_fetch
+    from scraper_app.security.secrets import redact_params, sanitize_url, strip_secrets
+
+    key = "sk-live-secret-000111222333"
+    for provider in managed_fetch.providers():
+        if not provider.descriptor.env_keys:
+            continue
+        call = _managed_call(provider.id, key)
+        params = dict(call.params or {})
+        if key not in str(params):
+            continue
+
+        # Anything that writes a request out must go through these helpers.
+        assert key not in str(redact_params(params)), provider.id
+        assert key not in str(strip_secrets({"params": params})), provider.id
+
+        full_url = f"{call.url}?" + "&".join(f"{k}={v}" for k, v in params.items())
+        assert key not in sanitize_url(full_url), provider.id
+
+
+def test_managed_fetch_errors_do_not_quote_the_request_url():
+    """An exception message is the easiest place for a key to escape."""
+    import inspect
+
+    from scraper_app.providers import managed_fetch
+
+    source = inspect.getsource(managed_fetch.ManagedFetchProvider.fetch)
+    # Formatting the exception itself would embed httpx's URL, key included.
+    assert "{exc}" not in source
+    assert "str(exc)" not in source
+    assert "call.url" not in source.split("raise ScraperError")[-1]

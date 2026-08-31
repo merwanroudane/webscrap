@@ -337,6 +337,16 @@ def extract(
 
     if ai_usage:
         result.metadata.setdefault("ai_usage", ai_usage)
+        # Name the model in the metadata itself, so provenance can state which
+        # provider and model produced a column without parsing the usage log
+        # (audit v0.2 section 60). Identifiers only — never a key.
+        for entry in ai_usage.get("entries") or []:
+            if entry.get("provider"):
+                result.metadata.setdefault("ai_provider", entry["provider"])
+            if entry.get("model"):
+                result.metadata.setdefault("ai_model", entry["model"])
+            if "ai_provider" in result.metadata and "ai_model" in result.metadata:
+                break
 
     warnings = list(result.warnings)
     if mapping and mapping.unmatched:

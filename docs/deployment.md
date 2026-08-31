@@ -70,29 +70,42 @@ Error during processing dependencies
 ```
 
 That message means Community Cloud used **Poetry** against `pyproject.toml`, and
-`requires-python` excluded the interpreter it was running. It is fixed here in
-two ways:
+`requires-python` excluded the interpreter it was running. Adding a manifest
+that ranks above `pyproject.toml` in the search order stops Poetry being invoked
+at all.
 
-* `requirements.txt` exists at the repository root. Community Cloud searches
-  `uv.lock` → `Pipfile` → `environment.yml` → `requirements.txt` →
-  `pyproject.toml` and uses the **first** it finds, so pip is used and Poetry is
-  never invoked.
-* `requirements.txt` lists only what the application imports, so the install is
-  small and unlikely to hit a package without a wheel for the chosen Python.
-
-Even so, **select Python 3.12** in Advanced settings. Some scientific wheels
-(`pyreadstat`, `pyreadr`, `pyarrow`) appear late for a brand-new interpreter, and
-3.12 is the version this project is developed and tested on.
+**Select Python 3.12** in Advanced settings as well. Some scientific wheels
+(`pyreadstat`, `pyarrow`) appear late for a brand-new interpreter, and 3.12 is
+the version this project is developed and tested on.
 
 For an app that is already deployed and failing, the reliable path is to delete
 it from the Community Cloud dashboard and deploy again with the Python version
 set. Changing the version is not always offered for an existing app.
 
-### One dependency file only
+### Which manifest is actually used
 
-Community Cloud uses the first manifest it finds and ignores the rest. Do not
-add `Pipfile`, `environment.yml` or `uv.lock` to this repository unless you also
-remove `requirements.txt`, or dependency resolution will silently change.
+Community Cloud searches for a dependency file in this order and uses the
+**first** one it finds:
+
+`uv.lock` → `Pipfile` → `environment.yml` → `requirements.txt` → `pyproject.toml`
+
+This repository ships `uv.lock`, so **`uv.lock` is what Community Cloud installs
+from.** That is deliberate: a lockfile pins exact versions, which is what makes a
+dataset collected today reproducible next year.
+
+`requirements.txt` is still present, pinned, and kept byte-consistent with the
+lockfile — it is *generated* from it:
+
+```bash
+python scripts/sync_requirements.py
+```
+
+CI fails if the two drift apart, so it does not matter which of the two a given
+platform picks: both install identical versions. Use `requirements.txt` where
+`uv` is unavailable (plain `pip`, Docker, an institutional server).
+
+Do not hand-edit `requirements.txt`. Change `pyproject.toml`, run `uv lock`, then
+re-run the script above.
 
 ### What to expect on Community Cloud
 

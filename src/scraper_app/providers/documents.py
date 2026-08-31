@@ -144,9 +144,27 @@ class DoclingExtractor(DocumentExtractor):
             converted = converter.convert(str(path))
 
         document = converted.document
-        pages: list[DocumentPage] = []
+        return self._to_pages(document, url=url, max_pages=max_pages)
 
-        # Tables first: Docling exposes them as dataframes.
+    @staticmethod
+    def _page_of(item: Any) -> int:
+        """The page an item sits on, from Docling's own provenance."""
+        for prov in getattr(item, "prov", []) or []:
+            try:
+                return int(getattr(prov, "page_no", 1) or 1)
+            except (TypeError, ValueError):
+                break
+        return 1
+
+    def _to_pages(self, document: Any, *, url: str, max_pages: int | None) -> DocumentResult:
+        """Split a converted document into real pages (audit v0.2 sections 40-41).
+
+        The first version put the whole document's Markdown on page 1 and
+        attributed every word of a 200-page PDF to that page. For a research
+        tool that is worse than no page number at all, so text is now placed on
+        the page Docling itself recorded for it, and ``max_pages`` is applied to
+        those pages rather than to the serialized output.
+        """
         tables_by_page: dict[int, list[list[list[str]]]] = {}
         for table in getattr(document, "tables", []) or []:
             try:
@@ -154,35 +172,46 @@ class DoclingExtractor(DocumentExtractor):
                 grid = [[str(c) for c in frame.columns]] + frame.astype(str).values.tolist()
             except Exception:
                 continue
-            page_number = 1
-            for prov in getattr(table, "prov", []) or []:
-                page_number = int(getattr(prov, "page_no", 1) or 1)
-                break
-            tables_by_page.setdefault(page_number, []).append(grid)
+            tables_by_page.setdefault(self._page_of(table), []).append(grid)
 
-        try:
-            markdown = document.export_to_markdown()
-        except Exception:
-            markdown = ""
+        text_by_page: dict[int, list[str]] = {}
+        for item in getattr(document, "texts", []) or []:
+            content = str(getattr(item, "text", "") or "").strip()
+            if content:
+                text_by_page.setdefault(self._page_of(item), []).append(content)
 
-        page_numbers = sorted(set(tables_by_page) | {1})
-        for number in page_numbers:
-            if max_pages and number > max_pages:
-                break
-            pages.append(
-                DocumentPage(
-                    number=number,
-                    text=markdown if number == 1 else "",
-                    tables=tables_by_page.get(number, []),
+        metadata: dict[str, Any] = {"converter": "docling"}
+
+        if not text_by_page:
+            # No per-item provenance available. Fall back to the whole-document
+            # Markdown, but say so rather than implying it all came from page 1.
+            try:
+                markdown = document.export_to_markdown()
+            except Exception:
+                markdown = ""
+            if markdown.strip():
+                text_by_page[1] = [markdown]
+                metadata["page_attribution"] = (
+                    "whole document (Docling reported no per-item page provenance)"
                 )
-            )
 
-        return DocumentResult(
-            url=url,
-            pages=pages,
-            metadata={"converter": "docling"},
-            extractor="docling",
-        )
+        numbers = sorted(set(tables_by_page) | set(text_by_page))
+        if max_pages:
+            # "First N pages of the document", matching the PyMuPDF path, rather
+            # than "first N pages that happen to contain something".
+            numbers = [number for number in numbers if number <= max_pages]
+            metadata["pages_limited_to"] = max_pages
+
+        pages = [
+            DocumentPage(
+                number=number,
+                text="\n\n".join(text_by_page.get(number, [])),
+                tables=tables_by_page.get(number, []),
+            )
+            for number in numbers
+        ]
+
+        return DocumentResult(url=url, pages=pages, metadata=metadata, extractor="docling")
 
 
 PROVIDERS: dict[str, type[DocumentExtractor]] = {

@@ -11,7 +11,7 @@ from typing import Any
 
 from ..ai import service as ai_service
 from . import discovery, documents, managed_fetch, remote_browser, semantic_content
-from .base import ProviderCategory, ProviderDescriptor, ProviderStatus
+from .base import ProviderCategory, ProviderDescriptor, ProviderState, ProviderStatus
 
 CATEGORY_LABEL = {
     ProviderCategory.LLM: "AI model",
@@ -22,6 +22,21 @@ CATEGORY_LABEL = {
     ProviderCategory.DOCUMENT: "Document",
     ProviderCategory.ENGINE: "Extraction engine",
 }
+
+
+def _litellm_state() -> ProviderState:
+    """Mirror the LiteLLM provider's own availability check, so they agree."""
+    from ..ai.providers.litellm_provider import LiteLLMProvider
+
+    availability = LiteLLMProvider().availability()
+    if availability.ready:
+        return ProviderState(ProviderStatus.READY, "Available now.")
+    return ProviderState(
+        ProviderStatus.NOT_CONFIGURED,
+        availability.reason,
+        getattr(availability, "install_hint", "") or "",
+    )
+
 
 #: AI providers are described by the ai package; mirror them as descriptors so
 #: the Settings table can show every external dependency in one place.
@@ -68,7 +83,11 @@ _AI_DESCRIPTORS = {
         install_hint="pip install litellm",
         docs="https://docs.litellm.ai/docs/",
         privacy_note="Routes to whichever backend you configure.",
-        notes="Needs one backend key, e.g. ANTHROPIC_API_KEY or OPENAI_API_KEY.",
+        notes="Needs the key for the backend its model resolves to.",
+        # LiteLLM needs one of several keys, and which one depends on the model
+        # it resolves to. Asking the provider itself is the only way this table
+        # and the AI page can agree (audit v0.2 section 27).
+        state_resolver=_litellm_state,
     ),
 }
 

@@ -134,10 +134,14 @@ With `uv` (recommended — it installs Python 3.12 for you):
 ```bash
 git clone https://github.com/merwanroudane/webscrap.git
 cd webscrap
-uv venv --python 3.12
-uv pip install -r requirements.txt
+uv sync --locked
 uv run streamlit run app.py
 ```
+
+`uv sync --locked` installs the exact versions recorded in `uv.lock`, which is
+what the hosted app and CI both run. Use it when you want a run you can
+reproduce; the `pip install -r requirements.txt` route above installs the same
+pinned versions, because that file is generated from the lockfile.
 
 ### Prerequisites
 

@@ -23,6 +23,7 @@ import os
 import time
 from typing import Any
 
+from ..async_runner import run_async_safely
 from ..config import SETTINGS
 from ..exceptions import ErrorCode, ScraperError
 from ..logging_config import RunLogger
@@ -232,8 +233,6 @@ class BrowserUseEngine(_AgenticEngine):
         )
 
     def _run(self, task: str) -> str:  # pragma: no cover - requires credentials
-        import asyncio
-
         from browser_use import Agent  # type: ignore
 
         async def run() -> str:
@@ -247,7 +246,7 @@ class BrowserUseEngine(_AgenticEngine):
                         return str(result)
             return str(history)
 
-        return asyncio.run(run())
+        return run_async_safely(run)
 
 
 class SkyvernEngine(_AgenticEngine):

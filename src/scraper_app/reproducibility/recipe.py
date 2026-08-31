@@ -82,8 +82,37 @@ def build(
         ],
         "cleaning": cleaning or [],
         "provenance_columns": request.add_provenance_columns,
+        "runtime": _runtime(request, result, decision),
     }
     return strip_secrets(payload)
+
+
+def _runtime(
+    request: ExtractionRequest,
+    result: ExtractionResult,
+    decision: RouteDecision | None,
+) -> dict[str, Any]:
+    """The non-secret configuration needed to repeat the same strategy.
+
+    A recipe that records only the engine cannot be replayed faithfully when
+    that engine fronts several vendors, or when a model wrote part of the
+    schema. This records which service and model were used and what the run was
+    permitted to do — never a key, cookie or header value (audit v0.2 §61).
+    """
+    metadata = result.metadata or {}
+    runtime: dict[str, Any] = {
+        "engine": result.engine,
+        "provider": metadata.get("provider"),
+        "ai_provider": metadata.get("ai_provider"),
+        "ai_model": metadata.get("ai_model"),
+        "used_ai": bool(decision.uses_ai) if decision else False,
+        "used_cloud": bool(decision.uses_cloud) if decision else False,
+        "allow_ai": request.allow_ai,
+        "allow_browser": request.allow_browser,
+        "allow_cloud": getattr(request, "allow_cloud", None),
+        "ai_provider_requested": request.ai_provider,
+    }
+    return {key: value for key, value in runtime.items() if value is not None}
 
 
 def recipe_hash(recipe: dict[str, Any]) -> str:

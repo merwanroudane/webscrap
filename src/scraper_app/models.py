@@ -399,6 +399,17 @@ class Provenance(BaseModel):
     used_ai: bool = False
     used_cloud_provider: str | None = None
 
+    # Which external service actually produced the data (audit v0.2 section 60).
+    # "engine" alone does not answer "who saw my query, and which model wrote
+    # this column?", which is exactly what a methods section has to state.
+    # Never credentials — only identifiers.
+    provider_id: str | None = None
+    provider_category: str | None = None
+    ai_provider: str | None = None
+    ai_model: str | None = None
+    remote_browser_provider: str | None = None
+    managed_fetch_provider: str | None = None
+
 
 class QualityReport(BaseModel):
     model_config = ConfigDict(extra="forbid")
