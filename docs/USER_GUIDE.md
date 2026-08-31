@@ -23,10 +23,12 @@ Developed by **Dr Merwan Roudane** · <https://github.com/merwanroudane>
 11. [Reproducing a dataset later](#11-reproducing-a-dataset-later)
 12. [Guided and Advanced modes](#12-guided-and-advanced-modes)
 13. [Working in Arabic](#13-working-in-arabic)
-14. [Engines and API keys](#14-engines-and-api-keys)
-15. [When something goes wrong](#15-when-something-goes-wrong)
-16. [Responsible use](#16-responsible-use)
-17. [FAQ](#17-faq)
+14. [Finding sources when you have no URL](#14-finding-sources-when-you-have-no-url)
+15. [AI assistance — optional, and off by default](#15-ai-assistance--optional-and-off-by-default)
+16. [Engines, providers and API keys](#16-engines-providers-and-api-keys)
+17. [When something goes wrong](#17-when-something-goes-wrong)
+18. [Responsible use](#18-responsible-use)
+19. [FAQ](#19-faq)
 
 ---
 
@@ -91,7 +93,7 @@ playwright install chromium
 | --- | --- |
 | **Left sidebar — Language** | Switches the whole interface between English and العربية. |
 | **Left sidebar — Workflow** | Your position in the seven steps. `✓` done · `●` current · `○` not started · `!` needs review. |
-| **Left sidebar — Pages** | Workflow (the main flow), History, Engines & keys, Help. |
+| **Left sidebar — Pages** | Workflow (the main flow), Find sources, History, Engines & keys, Help. |
 | **Left sidebar — New extraction** | Clears everything and starts again. |
 | **Main area** | Whatever the current step needs — never more than a handful of controls. |
 | **Right column** | Quick start reminder and example requests. |
@@ -492,29 +494,119 @@ Your plain-language request works in Arabic too:
 
 ---
 
-## 14. Engines and API keys
+## 14. Finding sources when you have no URL
 
-![Engines page](images/11-engines.png)
+Sometimes you know the question but not the page. The **Find sources** page
+searches the web for candidates and hands one to the analyzer.
 
-The **Engines & keys** page is an honest inventory:
+![Find sources](images/13-find-sources.png)
+
+1. Open **Find sources** in the sidebar.
+2. Type your question in plain language — `annual inflation rate by country
+   statistics table`.
+3. Optionally restrict it to domains you trust, e.g. `worldbank.org, imf.org`.
+4. Review the result cards: title, domain, snippet, relevance and a copyable URL.
+5. Click **Analyze this** on the one you want. You land on the normal workflow
+   with that URL already filled in.
+
+**Discovery is not extraction.** A search result never starts a crawl by itself
+— you always approve the source first. Results pointing at private or internal
+addresses are dropped before you ever see them.
+
+This step is optional and needs one key: `TAVILY_API_KEY`, `EXA_API_KEY` or
+`JINA_API_KEY`. Without one the page explains itself, exactly as shown above,
+and you simply paste a URL on the Source page instead.
+
+---
+
+## 15. AI assistance — optional, and off by default
+
+The application does not need a language model and never uses one unless you
+switch it on. Open **Access and privacy options** on the Source page:
+
+![AI and agentic controls](images/12-ai-controls.png)
+
+| Switch | What it does |
+| --- | --- |
+| **Allow AI assistance** | Lets a model help *only* where deterministic parsing fell short. Greyed out until a provider key is configured. |
+| **Model provider** | Appears once AI is on: Anthropic, OpenAI, Google or LiteLLM. |
+| **Allow agentic browsing** | For pages that genuinely need clicking through steps. Never signs in, never solves a challenge. |
+
+### What AI is allowed to do
+
+* **Propose field names** from a page sample, when your plain-language request
+  mapped to nothing.
+* **Map leftover fields** that exact, synonym and fuzzy matching could not place.
+* **Extract records** as a last resort, when no table or repeated structure was
+  found.
+* **Describe variables** for the data dictionary.
+
+### What protects your data
+
+* **Deterministic first, always.** A table a parser can read is never sent to a
+  model.
+* **Evidence checking.** Every value a model proposes is looked for in the page
+  it was shown. If the values are not there, the whole proposal is rejected — an
+  invented row cannot reach your dataset.
+* **Schema validation.** Replies are parsed into a strict shape; anything
+  malformed is discarded.
+* **Bounded, wrapped excerpts.** Only a small slice of the page is sent, wrapped
+  as untrusted content with instructions never to follow it. Credentials are
+  never included.
+* **Visible before it happens.** The preflight card shows `AI calls` and names
+  the provider before you press Start.
+* **Labelled afterwards.** Any AI-named column is marked `ai_inferred` in the
+  data dictionary, so a reader can tell it apart from a source-native name.
+
+---
+
+## 16. Engines, providers and API keys
+
+![Engines and their status](images/14-engines-status.png)
+
+The **Engines & keys** page is an honest inventory. Nothing claims to work
+unless it does.
 
 | Status | Meaning |
 | --- | --- |
-| `✓ Ready` | Installed and usable right now. |
-| `○ Optional` | A real adapter exists, but the package or key is missing. The exact install command is shown. |
-| `– Catalogue` | A known provider whose adapter is **not implemented** in this version. |
+| `✓ Ready` | Usable right now |
+| `◍ Not configured` | Real adapter, package present, API key missing |
+| `○ Not installed` | Real adapter, optional package missing — install command shown |
+| `– Catalogue` | Known provider whose adapter is **not** implemented here, with the reason |
 
-Nothing here pretends to work. The page also lists which environment variables
-each provider needs and whether they are configured — never the key values
-themselves — plus the limits currently in force (page caps, timeouts, request
-rate, user agent).
+A default installation shows **9 engines ready** and needs no keys at all.
+
+### External providers
+
+Below the engines is the provider inventory: remote browsers, managed fetch
+services, source discovery, semantic content APIs and model providers.
+
+![External providers](images/15-external-providers.png)
+
+| Group | Providers |
+| --- | --- |
+| **Remote browsers** | Browserbase, Hyperbrowser, Steel, Browserless |
+| **Managed fetch** | ZenRows, ScrapingBee, ScraperAPI, ScrapingAnt, Scrapfly, Oxylabs, Bright Data, Scrapeless, Nimble, Thordata |
+| **Source discovery** | Tavily, Exa, Jina Search |
+| **Semantic content** | Diffbot, Jina Reader |
+| **AI models** | Anthropic, OpenAI, Google, LiteLLM |
+
+Each row states which environment variable is missing, what it costs, whether it
+runs locally or in the cloud, and links to its documentation. The **API keys**
+table below shows which variables are configured — never their values.
+
+Two rules hold for every provider here:
+
+* using a vendor never bypasses the app's own access policy — the target URL
+  still passes the SSRF guard;
+* anti-bot and CAPTCHA-solving features are never exposed.
 
 Install commands are **printed for you to run**; the app never executes shell
 commands on your behalf.
 
 ---
 
-## 15. When something goes wrong
+## 17. When something goes wrong
 
 Errors are always readable, with the next steps listed. Common ones:
 
@@ -536,7 +628,7 @@ Raw tracebacks never appear in the interface.
 
 ---
 
-## 16. Responsible use
+## 18. Responsible use
 
 This tool collects **public** data and is built to be a good citizen:
 
@@ -556,7 +648,7 @@ What remains **your** responsibility as a researcher:
 
 ---
 
-## 17. FAQ
+## 19. FAQ
 
 **Do I need to know how to code?**
 No. Auto mode never asks for a selector, a query or a line of code.
@@ -567,9 +659,15 @@ APIs, articles, published files, feeds, PDFs. Sites behind logins, paywalls or
 bot challenges are deliberately out of scope.
 
 **Does it use AI?**
-Not by default. Every route in this guide is deterministic parsing. AI is an
-optional layer for naming fields when you ask for it, and any run that would use
-an AI or cloud service says so on the preflight card first.
+Not by default, and it works completely without one. Every route in this guide
+is deterministic parsing. AI is an opt-in layer — see
+[section 15](#15-ai-assistance--optional-and-off-by-default) — and any run that
+would call a model or a cloud service says so on the preflight card first.
+
+**Do I need any of the paid providers?**
+No. Nine engines are ready with no key and no optional package. The 25 external
+providers exist for people who already pay for one; the app is complete without
+them.
 
 **Where is my data stored?**
 When you run it locally, on your computer under `runs/<run_id>/`. Nothing is

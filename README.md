@@ -60,8 +60,35 @@ requirement in Auto mode.*
 </tr>
 </table>
 
-More screens — sources and provenance, the generated reproducer script, the
-engine inventory — are shown in the [user guide](docs/USER_GUIDE.md).
+More screens — sources and provenance, the generated reproducer script — are
+shown in the [user guide](docs/USER_GUIDE.md).
+
+---
+
+## New in v0.2
+
+<table>
+<tr>
+<td width="50%"><img src="docs/images/13-find-sources.png" alt="Find sources"></td>
+<td width="50%"><img src="docs/images/12-ai-controls.png" alt="AI and agentic controls"></td>
+</tr>
+<tr>
+<td><b>Find sources</b><br>No URL yet? Search for candidate pages with Tavily, Exa or Jina, review the cards, and send one to the analyzer. Discovery never starts a crawl by itself — you approve the source.</td>
+<td><b>AI, strictly optional</b><br>Off by default and greyed out until you configure a provider. When enabled it only fills gaps deterministic parsing left, and every value it proposes must appear in the page or the whole proposal is rejected.</td>
+</tr>
+<tr>
+<td><img src="docs/images/14-engines-status.png" alt="Engine status"></td>
+<td><img src="docs/images/15-external-providers.png" alt="External providers"></td>
+</tr>
+<tr>
+<td><b>25 engines, four honest states</b><br><code>✓ Ready</code>, <code>◍ Not configured</code>, <code>○ Not installed</code>, <code>– Catalogue</code>. Nine are ready with no key and no optional package; nothing claims to work unless it does.</td>
+<td><b>25 external providers</b><br>Remote browsers, ten managed fetch services, source discovery, semantic content and model providers — each showing the exact variable it needs, its cost mode and its docs.</td>
+</tr>
+</table>
+
+Also in v0.2: Scrapy/Crawlee crawlers, Scrapling adaptive parsing, Crawl4AI
+semantic mode, Firecrawl on the v2 SDK, agentic engines behind an explicit
+opt-in, CI on Linux and Windows, a reproducible `uv.lock`, and 138 tests.
 
 ---
 
