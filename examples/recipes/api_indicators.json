@@ -1,0 +1,58 @@
+{
+  "recipe_version": "1.0",
+  "app_version": "0.1.0",
+  "name": "JSON data · /api/indicators",
+  "source_url": "https://example.org/api/indicators?page=1",
+  "mode": "auto",
+  "preset": "auto",
+  "engine": "json_api",
+  "route_rationale": "The page data is available as a structured JSON response, which is faster and more reproducible than scraping the rendered page.",
+  "dataset": {
+    "kind": "api",
+    "title": "JSON data · /api/indicators",
+    "selector": null,
+    "table_index": null,
+    "records_path": "data",
+    "api_url": "https://example.org/api/indicators?page=1"
+  },
+  "request": {
+    "method": "GET",
+    "params": {},
+    "headers": {},
+    "selector": null,
+    "xpath": null,
+    "wait_for": null
+  },
+  "pagination": {
+    "type": "page_number",
+    "param": "page",
+    "start": 1,
+    "step": 1,
+    "url_template": "https://example.org/api/indicators?page={page}",
+    "next_selector": null,
+    "cursor_path": null,
+    "max_pages": 1,
+    "stop_when_empty": true,
+    "detected_from": "url_query",
+    "confidence": "high"
+  },
+  "crawl": {
+    "enabled": false,
+    "scope": "single",
+    "max_pages": 20,
+    "max_depth": 1,
+    "same_domain_only": true,
+    "include_patterns": [],
+    "exclude_patterns": [],
+    "use_sitemap": false
+  },
+  "limits": {
+    "max_pages": 5,
+    "max_rows": null,
+    "respect_robots": true,
+    "same_domain_only": true
+  },
+  "fields": [],
+  "cleaning": [],
+  "provenance_columns": true
+}

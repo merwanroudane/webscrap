@@ -1,0 +1,58 @@
+{
+  "recipe_version": "1.0",
+  "app_version": "0.1.0",
+  "name": "Repeated items · div.card",
+  "source_url": "https://example.org/cards.html",
+  "mode": "auto",
+  "preset": "auto",
+  "engine": "repeated_dom",
+  "route_rationale": "The page repeats the same block structure, so each block is read as one row using deterministic selectors.",
+  "dataset": {
+    "kind": "repeated",
+    "title": "Repeated items · div.card",
+    "selector": "div.card",
+    "table_index": null,
+    "records_path": null,
+    "api_url": null
+  },
+  "request": {
+    "method": "GET",
+    "params": {},
+    "headers": {},
+    "selector": null,
+    "xpath": null,
+    "wait_for": null
+  },
+  "pagination": {
+    "type": "next_link",
+    "param": null,
+    "start": 1,
+    "step": 1,
+    "url_template": "https://example.org/cards2.html",
+    "next_selector": "[rel=next]",
+    "cursor_path": null,
+    "max_pages": 1,
+    "stop_when_empty": true,
+    "detected_from": "rel_next",
+    "confidence": "high"
+  },
+  "crawl": {
+    "enabled": false,
+    "scope": "single",
+    "max_pages": 20,
+    "max_depth": 1,
+    "same_domain_only": true,
+    "include_patterns": [],
+    "exclude_patterns": [],
+    "use_sitemap": false
+  },
+  "limits": {
+    "max_pages": 2,
+    "max_rows": null,
+    "respect_robots": true,
+    "same_domain_only": true
+  },
+  "fields": [],
+  "cleaning": [],
+  "provenance_columns": true
+}

@@ -1,0 +1,58 @@
+{
+  "recipe_version": "1.0",
+  "app_version": "0.1.0",
+  "name": "Table 1 · Annual inflation rate (%)",
+  "source_url": "https://example.org/table.html",
+  "mode": "auto",
+  "preset": "auto",
+  "engine": "table",
+  "route_rationale": "The values are inside an HTML table, which pandas can read deterministically — no browser and no AI needed.",
+  "dataset": {
+    "kind": "table",
+    "title": "Table 1 · Annual inflation rate (%)",
+    "selector": null,
+    "table_index": 0,
+    "records_path": null,
+    "api_url": null
+  },
+  "request": {
+    "method": "GET",
+    "params": {},
+    "headers": {},
+    "selector": null,
+    "xpath": null,
+    "wait_for": null
+  },
+  "pagination": {
+    "type": "none",
+    "param": null,
+    "start": 1,
+    "step": 1,
+    "url_template": null,
+    "next_selector": null,
+    "cursor_path": null,
+    "max_pages": 1,
+    "stop_when_empty": true,
+    "detected_from": null,
+    "confidence": "low"
+  },
+  "crawl": {
+    "enabled": false,
+    "scope": "single",
+    "max_pages": 20,
+    "max_depth": 1,
+    "same_domain_only": true,
+    "include_patterns": [],
+    "exclude_patterns": [],
+    "use_sitemap": false
+  },
+  "limits": {
+    "max_pages": 50,
+    "max_rows": null,
+    "respect_robots": true,
+    "same_domain_only": true
+  },
+  "fields": [],
+  "cleaning": [],
+  "provenance_columns": true
+}

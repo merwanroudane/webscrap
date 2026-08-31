@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Dashboard</title></head>
+<body>
+<div id="root"></div>
+<script id="__NEXT_DATA__" type="application/json">
+{"props":{"pageProps":{"rows":[
+ {"indicator":"CPI","country":"Algeria","value":9.3},
+ {"indicator":"CPI","country":"Morocco","value":6.1},
+ {"indicator":"CPI","country":"Tunisia","value":9.3},
+ {"indicator":"CPI","country":"Egypt","value":33.9}]}}}
+</script>
+<script>fetch("/api/indicators?page=1").then(r=>r.json());</script>
+</body>
+</html>

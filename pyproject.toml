@@ -1,0 +1,102 @@
+[project]
+name = "smart-research-web-scraper"
+version = "0.1.0"
+description = "Research-oriented Streamlit application that turns web pages into analysis-ready datasets."
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+authors = [{ name = "Merwan Roudane", email = "merwanroudane920@gmail.com" }]
+maintainers = [{ name = "Merwan Roudane", email = "merwanroudane920@gmail.com" }]
+license = { text = "MIT" }
+dependencies = [
+  "streamlit",
+  "pandas",
+  "polars",
+  "numpy",
+  "pyarrow",
+  "duckdb",
+  "requests",
+  "httpx[http2]",
+  "aiohttp",
+  "beautifulsoup4",
+  "lxml",
+  "parsel",
+  "selectolax",
+  "trafilatura",
+  "extruct",
+  "feedparser",
+  "jmespath",
+  "jsonpath-ng",
+  "pydantic>=2",
+  "pandera[pandas]",
+  "tenacity",
+  "python-dotenv",
+  "orjson",
+  "protego",
+  "openpyxl",
+  "xlsxwriter",
+  "plotly",
+  "networkx",
+  "pyyaml",
+  "python-dateutil",
+  "tldextract",
+]
+
+[project.urls]
+Homepage = "https://github.com/merwanroudane"
+Repository = "https://github.com/merwanroudane"
+
+[project.optional-dependencies]
+browser = ["playwright", "selenium"]
+crawler = ["scrapy", "crawlee"]
+modern = ["crawl4ai", "scrapling[fetchers]"]
+cloud = ["firecrawl-py", "scrapegraph-py>=2.1.0", "agentql", "zyte-api", "apify"]
+agents = ["stagehand", "browser-use", "skyvern"]
+documents = ["docling", "pymupdf"]
+research = ["pyreadstat", "pyreadr", "kaleido", "pytablewriter"]
+dev = [
+  "pytest",
+  "pytest-asyncio",
+  "pytest-cov",
+  "respx",
+  "responses",
+  "ruff",
+  "mypy",
+  "bandit",
+  "pip-audit",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/scraper_app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+# runs/ holds generated reproducer scripts and datasets, not project source.
+extend-exclude = ["runs", ".pytest_runs", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4"]
+# C408: dict(...) kwargs read better in Plotly layout calls.
+# UP042: StrEnum would drop the str-subclass behaviour Pydantic serialisation relies on.
+ignore = ["B008", "E501", "C408", "UP042"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+follow_imports = "silent"
+
+[tool.ruff.lint.per-file-ignores]
+# app.py and the demo helper must extend sys.path before importing the package.
+"app.py" = ["E402"]
+"src/scraper_app/ui/demo.py" = ["E402"]
+"tests/**" = ["E402"]

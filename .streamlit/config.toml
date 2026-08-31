@@ -1,0 +1,23 @@
+[theme]
+base = "light"
+primaryColor = "#4F86F7"
+backgroundColor = "#FBFCFE"
+secondaryBackgroundColor = "#F1F7FF"
+textColor = "#25324A"
+linkColor = "#3F73D9"
+borderColor = "#D9E2F1"
+dataframeHeaderBackgroundColor = "#EDF4FF"
+baseRadius = "0.75rem"
+buttonRadius = "0.65rem"
+showWidgetBorder = true
+
+[theme.sidebar]
+backgroundColor = "#F7FAFF"
+secondaryBackgroundColor = "#EEF5FF"
+primaryColor = "#4F86F7"
+
+[server]
+maxUploadSize = 200
+
+[browser]
+gatherUsageStats = false
