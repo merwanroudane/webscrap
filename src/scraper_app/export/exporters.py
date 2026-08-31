@@ -50,6 +50,18 @@ def _package_available(module: str) -> bool:
         return False
 
 
+def safe_identifier(name: str) -> str:
+    """Return a safe SQL identifier.
+
+    Table names reach the exporters from the caller, so they are restricted to
+    a conservative character set and then quoted, rather than interpolated raw.
+    """
+    cleaned = re.sub(r"[^A-Za-z0-9_]", "_", str(name)).strip("_")
+    if not cleaned or cleaned[0].isdigit():
+        cleaned = f"t_{cleaned}" if cleaned else "dataset"
+    return cleaned[:63]
+
+
 def _flatten_for_export(frame: pd.DataFrame) -> pd.DataFrame:
     """Stringify nested values that only tabular-native formats can hold."""
     result = frame.copy()
@@ -254,6 +266,7 @@ def to_rds(frame: pd.DataFrame) -> bytes:
 
 
 def to_sqlite(frame: pd.DataFrame, table: str = "dataset") -> bytes:
+    table = safe_identifier(table)
     with tempfile.TemporaryDirectory() as directory:
         path = Path(directory) / "dataset.sqlite"
         connection = sqlite3.connect(path)
@@ -268,12 +281,20 @@ def to_sqlite(frame: pd.DataFrame, table: str = "dataset") -> bytes:
 def to_duckdb(frame: pd.DataFrame, table: str = "dataset") -> bytes:
     import duckdb  # type: ignore
 
+    # The identifier is restricted to [A-Za-z0-9_] and then quoted, so the
+    # statement below cannot carry caller-supplied SQL.
+    identifier = safe_identifier(table)
     with tempfile.TemporaryDirectory() as directory:
         path = Path(directory) / "dataset.duckdb"
         connection = duckdb.connect(str(path))
         try:
-            export = _flatten_for_export(frame)  # noqa: F841 - referenced by the SQL below
-            connection.execute(f"CREATE TABLE {table} AS SELECT * FROM export")
+            export = _flatten_for_export(frame)
+            connection.register("srws_export", export)
+            # SQL identifiers cannot be parameterized. `identifier` is
+            # restricted to [A-Za-z0-9_] by safe_identifier() and quoted, and
+            # the data arrives through register(), never through the statement.
+            statement = f'CREATE TABLE "{identifier}" AS SELECT * FROM srws_export'  # nosec B608
+            connection.execute(statement)
         finally:
             connection.close()
         return path.read_bytes()
