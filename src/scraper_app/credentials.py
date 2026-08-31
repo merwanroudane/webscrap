@@ -244,7 +244,7 @@ AGENTIC_CREDENTIALS: tuple[CredentialSpec, ...] = (
         "Agentic",
         ("SKYVERN_API_KEY",),
         "https://github.com/Skyvern-AI/skyvern",
-        optional_vars=("SKYVERN_BASE_URL",),
+        optional_vars=("SKYVERN_BASE_URL", "SKYVERN_ENGINE"),
     ),
     CredentialSpec(
         "stagehand",

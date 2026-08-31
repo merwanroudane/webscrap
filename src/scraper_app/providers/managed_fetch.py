@@ -321,7 +321,11 @@ BrightDataProvider = _make(
         },
         headers={"Authorization": f"Bearer {self.key()}", "Content-Type": "application/json"},
     ),
-    notes="Set BRIGHTDATA_ZONE to the Web Unlocker zone name.",
+    notes=(
+        "Set BRIGHTDATA_ZONE to the Web Unlocker zone name. Web Unlocker decides "
+        "JavaScript rendering and geolocation itself from the zone configuration, "
+        "so the per-run 'render JavaScript' and country options do not apply here."
+    ),
 )
 
 ScrapelessProvider = _make(
