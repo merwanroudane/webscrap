@@ -19,12 +19,34 @@ import numpy as np
 import pandas as pd
 
 MISSING_TOKENS = {
-    "", "-", "--", "n/a", "N/A", "na", "NA", "NaN", "nan", "null", "NULL", "none", "None",
-    "..", "...", ":", "—", "–", "?", "غير متاح", "لا يوجد",
+    "",
+    "-",
+    "--",
+    "n/a",
+    "N/A",
+    "na",
+    "NA",
+    "NaN",
+    "nan",
+    "null",
+    "NULL",
+    "none",
+    "None",
+    "..",
+    "...",
+    ":",
+    "—",
+    "–",
+    "?",
+    "غير متاح",
+    "لا يوجد",
 }
 
 _PERCENT = re.compile(r"^\s*([-+]?[\d\s.,]+)\s*%\s*$")
-_CURRENCY = re.compile(r"^\s*([$€£¥₹]|USD|EUR|GBP|SAR|AED|DZD)?\s*([-+]?[\d\s.,]+)\s*([$€£¥₹]|USD|EUR|GBP|SAR|AED|DZD)?\s*$", re.IGNORECASE)
+_CURRENCY = re.compile(
+    r"^\s*([$€£¥₹]|USD|EUR|GBP|SAR|AED|DZD)?\s*([-+]?[\d\s.,]+)\s*([$€£¥₹]|USD|EUR|GBP|SAR|AED|DZD)?\s*$",
+    re.IGNORECASE,
+)
 _PARENS_NEGATIVE = re.compile(r"^\s*\(([\d\s.,]+)\)\s*$")
 _NUMBER_LIKE = re.compile(r"^[-+]?[\d\s.,]+$")
 _BOOL_TRUE = {"true", "yes", "y", "1", "نعم", "صحيح"}
@@ -74,6 +96,36 @@ class CleaningResult:
     operations: list[CleaningOperation] = field(default_factory=list)
     conversion_failures: dict[str, int] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
+
+
+def _parse_dates_series(series: pd.Series) -> pd.Series:
+    """Parse dates, falling back to dateparser for non-English formats."""
+    parsed = pd.to_datetime(series, errors="coerce", format="mixed", utc=False)
+    missing = parsed.isna() & series.notna()
+    if not missing.any():
+        return parsed
+    try:
+        import dateparser
+    except Exception:
+        return parsed
+    # dateparser handles Arabic and other locales pandas does not.
+    for index in series.index[missing]:
+        value = dateparser.parse(str(series.loc[index]))
+        if value is not None:
+            parsed.loc[index] = value
+    return parsed
+
+
+def fix_text(value):
+    """Repair mojibake when ftfy is available; otherwise leave the text alone."""
+    if not isinstance(value, str):
+        return value
+    try:
+        import ftfy
+
+        return ftfy.fix_text(value)
+    except Exception:
+        return value
 
 
 def is_text_column(series: pd.Series) -> bool:
@@ -149,7 +201,7 @@ def clean(frame: pd.DataFrame, options: CleaningOptions) -> CleaningResult:
         for column in columns:
             original = result[column]
             trimmed = original.map(
-                lambda v: re.sub(r"\s+", " ", v).strip() if isinstance(v, str) else v
+                lambda v: re.sub(r"\s+", " ", fix_text(v)).strip() if isinstance(v, str) else v
             )
             changed += int((original.astype(str) != trimmed.astype(str)).sum())
             result[column] = trimmed
@@ -220,7 +272,7 @@ def clean(frame: pd.DataFrame, options: CleaningOptions) -> CleaningResult:
         for column in targets:
             if column not in result.columns:
                 continue
-            parsed = pd.to_datetime(result[column], errors="coerce", format="mixed", utc=False)
+            parsed = _parse_dates_series(result[column])
             failed = int(parsed.isna().sum() - result[column].isna().sum())
             if len(result) and parsed.notna().mean() < 0.5:
                 warnings.append(
@@ -246,9 +298,11 @@ def clean(frame: pd.DataFrame, options: CleaningOptions) -> CleaningResult:
                 continue
             if set(lowered.unique()) <= (_BOOL_TRUE | _BOOL_FALSE):
                 result[column] = result[column].map(
-                    lambda v: True
-                    if str(v).strip().lower() in _BOOL_TRUE
-                    else (False if str(v).strip().lower() in _BOOL_FALSE else np.nan)
+                    lambda v: (
+                        True
+                        if str(v).strip().lower() in _BOOL_TRUE
+                        else (False if str(v).strip().lower() in _BOOL_FALSE else np.nan)
+                    )
                 )
                 columns.append(column)
                 changed += int(result[column].notna().sum())
@@ -272,7 +326,12 @@ def clean(frame: pd.DataFrame, options: CleaningOptions) -> CleaningResult:
                 columns.append(column)
         if columns:
             operations.append(
-                CleaningOperation("Normalize categories", columns, changed, detail="Whitespace only; labels preserved.")
+                CleaningOperation(
+                    "Normalize categories",
+                    columns,
+                    changed,
+                    detail="Whitespace only; labels preserved.",
+                )
             )
 
     if options.standardize_column_names:
@@ -339,9 +398,12 @@ def _numeric_candidates(frame: pd.DataFrame) -> list[str]:
         series = frame[column].dropna().astype(str).head(200)
         if series.empty:
             continue
-        hits = sum(1 for value in series if _to_number(value)[1] and _NUMBER_LIKE.match(
-            re.sub(r"[%$€£¥₹,\s]|USD|EUR|GBP", "", value)
-        ))
+        hits = sum(
+            1
+            for value in series
+            if _to_number(value)[1]
+            and _NUMBER_LIKE.match(re.sub(r"[%$€£¥₹,\s]|USD|EUR|GBP", "", value))
+        )
         if hits / len(series) >= 0.7:
             candidates.append(column)
     return candidates

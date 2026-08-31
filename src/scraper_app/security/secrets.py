@@ -56,9 +56,7 @@ def redact_headers(headers: dict[str, str] | None) -> dict[str, str]:
 def redact_params(params: dict[str, Any] | None) -> dict[str, Any]:
     if not params:
         return {}
-    return {
-        k: (_REDACTED if k.lower() in SENSITIVE_PARAM_NAMES else v) for k, v in params.items()
-    }
+    return {k: (_REDACTED if k.lower() in SENSITIVE_PARAM_NAMES else v) for k, v in params.items()}
 
 
 def sanitize_url(url: str) -> str:

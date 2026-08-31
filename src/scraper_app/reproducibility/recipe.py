@@ -72,7 +72,12 @@ def build(
             "same_domain_only": request.same_domain_only,
         },
         "fields": [
-            {"name": f.name, "type": f.dtype, "required": f.required, "name_source": f.name_source.value}
+            {
+                "name": f.name,
+                "type": f.dtype,
+                "required": f.required,
+                "name_source": f.name_source.value,
+            }
             for f in (schema.fields if schema else [])
         ],
         "cleaning": cleaning or [],

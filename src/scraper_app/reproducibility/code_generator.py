@@ -91,7 +91,9 @@ def generate(
         engine=engine,
         created=created,
         deps=" ".join(deps),
-        stdlib_imports="\n" + "\n".join(f"import {name}" for name in stdlib) + "\n" if stdlib else "",
+        stdlib_imports="\n" + "\n".join(f"import {name}" for name in stdlib) + "\n"
+        if stdlib
+        else "",
     )
     return head + _insert_rate_limit(body, delay)
 
@@ -118,7 +120,7 @@ def walk(payload, path="{records_path}"):
     return node or []
 '''
     else:
-        walk = '''
+        walk = """
 def walk(payload, path=None):
     if isinstance(payload, list):
         return payload
@@ -127,7 +129,7 @@ def walk(payload, path=None):
             if isinstance(value, list) and value and isinstance(value[0], dict):
                 return value
     return []
-'''
+"""
 
     if ptype == "page_number" and template:
         loop = f'''
@@ -156,7 +158,7 @@ with httpx.Client(headers=HEADERS, timeout=30.0, follow_redirects=True) as clien
     rows = walk(response.json())
 '''
 
-    body = f'''import httpx
+    body = f"""import httpx
 import pandas as pd
 
 HEADERS = {{"User-Agent": "research-reproduction-script"}}
@@ -164,7 +166,7 @@ HEADERS = {{"User-Agent": "research-reproduction-script"}}
 df = pd.json_normalize(rows)
 print(df.shape)
 df.to_csv("dataset.csv", index=False)
-'''
+"""
     return body, ["httpx", "pandas"]
 
 
@@ -199,7 +201,7 @@ with httpx.Client(headers=HEADERS, timeout=30.0, follow_redirects=True) as clien
 
 df = pd.read_html(io.StringIO(response.text), flavor="lxml")[TABLE_INDEX]
 '''
-    body = f'''import io
+    body = f"""import io
 
 import httpx
 import pandas as pd
@@ -209,7 +211,7 @@ TABLE_INDEX = {index}
 {loop}
 print(df.shape)
 df.to_csv("dataset.csv", index=False)
-'''
+"""
     return body, ["httpx", "pandas", "lxml"]
 
 
@@ -406,8 +408,8 @@ def _playwright_script(url, dataset, pagination, max_pages, delay) -> tuple[str,
     selector = dataset.get("selector")
     table_index = dataset.get("table_index")
     extraction = (
-        f'''    tables = pd.read_html(io.StringIO(html), flavor="lxml")
-    df = tables[{table_index or 0}]'''
+        f"""    tables = pd.read_html(io.StringIO(html), flavor="lxml")
+    df = tables[{table_index or 0}]"""
         if table_index is not None or not selector
         else f'''    tree = lxml_html.fromstring(html)
     rows = []

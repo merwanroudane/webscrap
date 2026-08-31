@@ -164,28 +164,32 @@ def fetch(
             last_error = exc
             if attempt > retries:
                 raise ScraperError(ErrorCode.TIMEOUT, guarded.host) from exc
-            time.sleep(SETTINGS.politeness.backoff_factor ** attempt)
+            time.sleep(SETTINGS.politeness.backoff_factor**attempt)
             continue
         except (httpx.ConnectError, httpx.ReadError, httpx.RemoteProtocolError) as exc:
             last_error = exc
             if attempt > retries:
                 raise ScraperError(ErrorCode.CONNECTION_ERROR, guarded.host) from exc
-            time.sleep(SETTINGS.politeness.backoff_factor ** attempt)
+            time.sleep(SETTINGS.politeness.backoff_factor**attempt)
             continue
         except httpx.HTTPError as exc:
             message = str(exc).lower()
-            code = ErrorCode.SSL_ERROR if "ssl" in message or "certificate" in message else ErrorCode.CONNECTION_ERROR
+            code = (
+                ErrorCode.SSL_ERROR
+                if "ssl" in message or "certificate" in message
+                else ErrorCode.CONNECTION_ERROR
+            )
             raise ScraperError(code, guarded.host) from exc
 
         if result is None:
             # Redirect without a Location header: nothing more to try.
             break
         if result.status_code == 429 and attempt <= retries:
-            delay = _retry_after(result) or SETTINGS.politeness.backoff_factor ** attempt
+            delay = _retry_after(result) or SETTINGS.politeness.backoff_factor**attempt
             time.sleep(min(delay, 30.0))
             continue
         if result.status_code >= 500 and attempt <= retries:
-            time.sleep(SETTINGS.politeness.backoff_factor ** attempt)
+            time.sleep(SETTINGS.politeness.backoff_factor**attempt)
             continue
         break
 

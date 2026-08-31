@@ -147,7 +147,9 @@ class BaseEngine(ABC):
         )
 
 
-def records_to_frame(records: list[dict[str, Any]], columns: list[str] | None = None) -> pd.DataFrame:
+def records_to_frame(
+    records: list[dict[str, Any]], columns: list[str] | None = None
+) -> pd.DataFrame:
     """Build a DataFrame with a stable column order across heterogeneous rows."""
     if not records:
         return pd.DataFrame(columns=columns or [])

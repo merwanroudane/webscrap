@@ -64,7 +64,11 @@ def profile(
 
         if unique == 1 and not str(column).startswith("_"):
             constant.append(str(column))
-        if not non_null.empty and unique / max(len(non_null), 1) > HIGH_CARDINALITY_RATIO and unique > 20:
+        if (
+            not non_null.empty
+            and unique / max(len(non_null), 1) > HIGH_CARDINALITY_RATIO
+            and unique > 20
+        ):
             high_cardinality.append(str(column))
         stats.append(entry)
 

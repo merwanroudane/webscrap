@@ -5,25 +5,70 @@ Every engine implements `BaseEngine`: `name`, `capabilities`, `availability()`,
 
 ## Implemented
 
-| Engine | Tier | Capabilities | Cost | Requires |
-| --- | --- | --- | --- | --- |
-| `direct_file` | 0 | files | free | — |
-| `feed` | 0 | rss, xml | free | feedparser |
-| `json_api` | 1 | json, pagination | free | — |
-| `table` | 1 | html_tables, pagination | free | — |
-| `repeated_dom` | 1 | static_html, pagination, crawl | free | — |
-| `structured` | 1 | structured_output | free | extruct (optional) |
-| `links` | 1 | static_html, crawl | free | — |
-| `article` | 1 | static_html, crawl | free | trafilatura (falls back to lxml) |
-| `document` | 1 | documents | local compute | pymupdf |
-| `playwright` | 3 | javascript, network_capture | local compute | playwright + chromium |
-| `crawl4ai` | 4 | javascript, semantic | local compute | crawl4ai |
-| `firecrawl` | 4 | hosted semantic | metered | firecrawl-py + key + `allow_cloud` |
+### Deterministic core — free, local, always preferred
 
-Other providers in the ecosystem (Scrapling, Scrapy, Crawlee, Selenium,
-ScrapeGraphAI, AgentQL, Stagehand, Browser Use, Skyvern, Browserbase, Apify,
-Zyte, Docling) are listed in the capability registry as *catalogue* entries:
-known, documented, and honestly marked as not implemented in this version.
+| Engine | Tier | Requires |
+| --- | --- | --- |
+| `direct_file` | 0 | — |
+| `feed` | 0 | feedparser |
+| `json_api` | 1 | — |
+| `table` | 1 | — |
+| `repeated_dom` | 1 | — |
+| `structured` | 1 | extruct |
+| `links` | 1 | — |
+| `article` | 1 | trafilatura (falls back to lxml) |
+| `document` | 1 | `documents` extra |
+
+### Crawlers and browsers
+
+| Engine | Tier | Requires | Notes |
+| --- | --- | --- | --- |
+| `scrapy` | 2 | `crawler` extra | Bounded crawls with a real scheduler |
+| `crawlee` | 2 | `crawler` extra | Same job through a request queue |
+| `playwright` | 3 | `browser` extra | Default browser; also drives remote sessions |
+| `selenium` | 3 | `browser` extra | Compatibility only |
+| `scrapling` | 3 | `modern` extra | Adaptive selector recovery after redesigns |
+
+### Adaptive, managed and agentic
+
+| Engine | Tier | Cost | Requires |
+| --- | --- | --- | --- |
+| `crawl4ai` | 4 | local compute | `modern` extra (semantic mode needs AI on) |
+| `firecrawl` | 4 | metered | `cloud` extra + `FIRECRAWL_API_KEY` |
+| `scrapegraph` | 4 | metered | `cloud` extra + `SGAI_API_KEY` |
+| `agentql` | 4 | metered | `AGENTQL_API_KEY` (REST; SDK optional) |
+| `managed_fetch` | 4 | metered | any managed provider key |
+| `semantic_content` | 4 | metered | `DIFFBOT_TOKEN` or `JINA_API_KEY` |
+| `stagehand` | 5 | metered | `agents` extra + model key |
+| `browser_use` | 5 | metered | `agents` extra + model key |
+| `skyvern` | 5 | metered | `SKYVERN_API_KEY` |
+
+## Provider protocols
+
+Four abstractions keep vendor count from multiplying code:
+
+| Protocol | Providers | Contract |
+| --- | --- | --- |
+| `RemoteBrowserProvider` | Browserbase, Hyperbrowser, Steel, Browserless | create a session, return a CDP endpoint, release it |
+| `ManagedFetchProvider` | ZenRows, ScrapingBee, ScraperAPI, ScrapingAnt, Scrapfly, Oxylabs, Bright Data, Scrapeless, Nimble, Thordata | build the vendor call, normalize the response to HTML |
+| `SourceDiscoveryProvider` | Tavily, Exa, Jina Search | query → candidate sources, guard-filtered |
+| `SemanticContentProvider` | Diffbot, Jina Reader | URL → title/text/metadata |
+| `DocumentExtractor` | PyMuPDF, Docling | bytes → pages, text, tables |
+
+Two rules hold for every provider:
+
+* the **target URL still passes the SSRF guard** — using a vendor never bypasses
+  our own access policy;
+* anti-bot and CAPTCHA-solving switches are never exposed. These adapters fetch
+  public pages.
+
+## Not implemented, and why
+
+| Provider | Reason |
+| --- | --- |
+| Apify | Actor-based: every actor has its own input schema, so a generic adapter would misrepresent what it does. Use Crawlee locally, or call a specific actor directly. |
+| Zyte API | Entirely overlapped by the managed fetch providers already implemented; adding it would mean a second, redundant metered path. |
+| Firecrawl `extract` | The current published SDK documents this method as unavailable. Scrape, crawl, map and search are wired. |
 
 ## Routing order
 

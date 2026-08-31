@@ -11,26 +11,53 @@ from .i18n import t
 from .theme import card, note
 
 GLOSSARY_EN = [
-    ("API", "A machine-readable address that returns data directly, usually as JSON. The most reliable source when one exists."),
+    (
+        "API",
+        "A machine-readable address that returns data directly, usually as JSON. The most reliable source when one exists.",
+    ),
     ("Table", "An HTML table on a page. Read directly into rows and columns, no AI needed."),
-    ("Repeated structure", "A block (card, row, listing) that repeats. Each block becomes one row of your dataset."),
-    ("Pagination", "How a site splits a long list across pages: page numbers, a Next link, a Load more button or infinite scroll."),
-    ("CSS selector", "A short pattern that points at page elements, e.g. div.card. You never need one in Auto mode."),
+    (
+        "Repeated structure",
+        "A block (card, row, listing) that repeats. Each block becomes one row of your dataset.",
+    ),
+    (
+        "Pagination",
+        "How a site splits a long list across pages: page numbers, a Next link, a Load more button or infinite scroll.",
+    ),
+    (
+        "CSS selector",
+        "A short pattern that points at page elements, e.g. div.card. You never need one in Auto mode.",
+    ),
     ("XPath", "Another way to point at page elements, useful for unusual layouts."),
-    ("JSONPath", "A path into a JSON document, e.g. data.items, telling the app where the records are."),
-    ("robots.txt", "A file where a site states which paths automated tools should not read. Respected by default."),
-    ("Provenance", "The record of where each row came from and how it was collected — essential for research."),
+    (
+        "JSONPath",
+        "A path into a JSON document, e.g. data.items, telling the app where the records are.",
+    ),
+    (
+        "robots.txt",
+        "A file where a site states which paths automated tools should not read. Respected by default.",
+    ),
+    (
+        "Provenance",
+        "The record of where each row came from and how it was collected — essential for research.",
+    ),
 ]
 
 GLOSSARY_AR = [
     ("API", "عنوان يعيد البيانات مباشرة بصيغة JSON غالبًا. أفضل مصدر عند توفره."),
     ("جدول", "جدول HTML في الصفحة. يُقرأ مباشرة إلى صفوف وأعمدة بدون ذكاء اصطناعي."),
     ("بنية متكررة", "كتلة (بطاقة، صف، عنصر قائمة) تتكرر. كل كتلة تصبح صفًا في بياناتك."),
-    ("ترقيم الصفحات", "طريقة تقسيم القائمة الطويلة: أرقام صفحات، رابط التالي، زر المزيد، أو تمرير لا نهائي."),
+    (
+        "ترقيم الصفحات",
+        "طريقة تقسيم القائمة الطويلة: أرقام صفحات، رابط التالي، زر المزيد، أو تمرير لا نهائي.",
+    ),
     ("محدد CSS", "نمط قصير يشير إلى عناصر الصفحة مثل div.card. لا تحتاجه في الوضع التلقائي."),
     ("XPath", "طريقة أخرى للإشارة إلى عناصر الصفحة، مفيدة للتخطيطات غير المعتادة."),
     ("JSONPath", "مسار داخل مستند JSON مثل data.items يحدد مكان السجلات."),
-    ("robots.txt", "ملف يحدد فيه الموقع المسارات التي يجب ألا تقرأها الأدوات الآلية. يُحترم افتراضيًا."),
+    (
+        "robots.txt",
+        "ملف يحدد فيه الموقع المسارات التي يجب ألا تقرأها الأدوات الآلية. يُحترم افتراضيًا.",
+    ),
     ("الإسناد", "سجل مصدر كل صف وكيفية جمعه — ضروري للبحث العلمي."),
 ]
 

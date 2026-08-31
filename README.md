@@ -3,9 +3,9 @@
 **Developed by Dr Merwan Roudane** · <merwanroudane920@gmail.com> · <https://github.com/merwanroudane>
 
 [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://webscrapapp.streamlit.app/)
-![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-4F86F7)
+![Python](https://img.shields.io/badge/python-3.12%20%7C%203.13-4F86F7)
 ![Streamlit](https://img.shields.io/badge/UI-Streamlit-57C7A5)
-![Tests](https://img.shields.io/badge/tests-92%20passing-57C7A5)
+![Tests](https://img.shields.io/badge/tests-138%20passing-57C7A5)
 ![Licence](https://img.shields.io/badge/licence-MIT-F2B84B)
 
 ### ▶ Use it now: **<https://webscrapapp.streamlit.app/>**
@@ -114,7 +114,7 @@ uv run streamlit run app.py
 
 ### Prerequisites
 
-* Python 3.11–3.13 (3.12 recommended; the project is developed and tested on 3.12).
+* Python 3.12 or 3.13 (3.12 is the primary target and what CI runs first).
 * No API keys. The complete local core works with zero credentials.
 
 ---
@@ -122,20 +122,29 @@ uv run streamlit run app.py
 ## Optional extras
 
 Everything below is optional. Missing packages or keys never break the app —
-they appear in **Settings → Engines & keys** as *optional*, with the exact
-install command.
+they appear in **Settings → Engines & keys** with their exact state and install
+command. Install a group with `pip install -e ".[group]"`.
+
+| Group | What it adds |
+| --- | --- |
+| `browser` | Playwright rendering, network API discovery, Selenium fallback |
+| `crawler` | Scrapy and Crawlee for bounded multi-page crawls |
+| `modern` | Crawl4AI and Scrapling — local adaptive engines |
+| `ai` | Anthropic / OpenAI / Google / LiteLLM + Instructor |
+| `cloud` | Firecrawl, ScrapeGraphAI, AgentQL |
+| `agents` | Stagehand, Browser Use, Skyvern |
+| `documents` | PyMuPDF and Docling (both AGPL-3.0) |
+| `helpers` | rapidfuzz, dateparser, ftfy, tldextract, sitemap parsing |
+| `research` | kaleido, pytablewriter, pyreadr (AGPL-3.0) |
+| `all-local` | Every free, local, permissively licensed extra at once |
 
 ```bash
-pip install playwright && playwright install chromium   # browser rendering + network API discovery
-pip install crawl4ai && crawl4ai-setup                  # local adaptive engine
-pip install pymupdf                                     # PDF/document extraction
-pip install firecrawl-py                                # hosted extraction (needs FIRECRAWL_API_KEY)
-pip install kaleido                                     # export charts as PNG/SVG/PDF
+pip install -e ".[browser]" && playwright install chromium   # most useful first
+pip install -e ".[all-local]"                                # everything local and free
 ```
 
-Environment variables live in `.env` — copy `.env.example` and fill in only what
-you intend to use. Keys are read from the environment; the app never stores or
-displays them.
+API keys live in `.env` — copy `.env.example` and fill in only what you intend
+to use. Keys are read from the environment; the app never stores or shows them.
 
 ---
 
@@ -169,12 +178,13 @@ The router scores every available engine on source fit, determinism,
 reliability, speed, cost and your preferences, then picks the cheapest reliable
 one and records a short rationale you can audit in **Diagnostics**.
 
-Preference order: downloadable file → documented public API →
-observed public JSON endpoint → embedded JSON / JSON-LD → HTML table →
-deterministic selectors → static crawl → local browser → adaptive/semantic
-engine → hosted provider. A higher tier is never used because it is fancier.
+Preference order: downloadable file → documented public API → observed public
+JSON endpoint → embedded JSON / JSON-LD → HTML table → deterministic selectors →
+static crawler → local browser → remote browser (if configured) →
+adaptive/semantic engine → managed provider (if configured) → agentic workflow.
+A higher tier is never used because it is newer or fancier.
 
-| Engine | Type | Cost | Status |
+| Engine | Type | Cost | Needs |
 | --- | --- | --- | --- |
 | Direct data file | local | free | built in |
 | Direct JSON API | local | free | built in |
@@ -184,16 +194,42 @@ engine → hosted provider. A higher tier is never used because it is fancier.
 | RSS/Atom feed | local | free | built in |
 | Links and files | local | free | built in |
 | Article / main text | local | free | built in |
-| Document (PDF) | local | local compute | needs `pymupdf` |
-| Browser rendering (Playwright) | local browser | local compute | needs `playwright` + Chromium |
-| Crawl4AI | local | local compute | needs `crawl4ai` |
-| Firecrawl | cloud | metered | needs package + key + explicit opt-in |
+| Scrapy / Crawlee crawler | local | free | `crawler` extra |
+| Browser rendering (Playwright) | local browser | local compute | `browser` extra |
+| Selenium | local browser | local compute | `browser` extra |
+| Scrapling (adaptive) | local | local compute | `modern` extra |
+| Crawl4AI | local | local compute | `modern` extra |
+| Document (PDF) | local | local compute | `documents` extra |
+| Firecrawl | cloud | metered | `cloud` extra + key |
+| ScrapeGraphAI | cloud | metered | `cloud` extra + key |
+| AgentQL | cloud | metered | key only (REST) |
+| Managed fetch × 10 | cloud | metered | key only |
+| Semantic content × 2 | cloud | metered | key only |
+| Stagehand / Browser Use / Skyvern | agentic | metered | `agents` extra + key |
 
-Other ecosystem providers (Scrapling, Scrapy, Crawlee, Selenium, ScrapeGraphAI,
-AgentQL, Stagehand, Browser Use, Skyvern, Browserbase, Apify, Zyte, Docling) are
-listed honestly in the capability registry as *catalogued — adapter not
-implemented in this version*. There are no placeholder buttons that pretend to
-work.
+**Managed fetch providers** — ZenRows, ScrapingBee, ScraperAPI, ScrapingAnt,
+Scrapfly, Oxylabs, Bright Data, Scrapeless, Nimble, Thordata. One contract, one
+HTTP implementation; each fetches the page and the ordinary deterministic
+parsers read it, so results have the same shape as a local run.
+
+**Remote browsers** — Browserbase, Hyperbrowser, Steel, Browserless. The
+Playwright workflow connects to a hosted session over CDP instead of launching
+local Chromium; no browser logic is duplicated per vendor.
+
+**Source discovery** — Tavily, Exa, Jina Search, plus Firecrawl search. A
+separate *Find sources* page: search, review the cards, then approve one source
+for analysis. Discovery never starts a crawl by itself.
+
+**Semantic content** — Diffbot and Jina Reader, for prose-heavy pages only.
+
+**AI layer** — provider-independent, off by default. Deterministic parsing is
+always tried first; a model may propose field names, map leftover fields, or
+extract records only when you enable it. Every reply is schema-validated and
+checked against evidence in the page, so an invented value cannot become a row.
+
+Two providers are catalogued rather than implemented, each with a documented
+reason: **Apify** (actor-specific input schemas make a generic adapter
+misleading) and **Zyte API** (fully overlapped by the managed fetch providers).
 
 ---
 
@@ -322,12 +358,17 @@ src/scraper_app/
   models.py                Pydantic models (request, profile, result, provenance…)
   exceptions.py            Typed error taxonomy with bilingual guidance
   service.py               Orchestration used by the UI and the tests
+  ai/                      provider-independent LLM layer + structured output
+  providers/               remote browsers, managed fetch, discovery,
+                           semantic content, documents, registry
   security/                url_guard, robots, secrets, content_safety
   discovery/               profiler, tables, repeated patterns, APIs, pagination,
                            structured data, sitemap, Playwright network probe
   routing/                 capability_registry, scoring, router
   engines/                 http_client + direct_file, json, table, html, article,
-                           document, playwright, crawl4ai, firecrawl
+                           document, playwright, selenium, scrapy, crawlee,
+                           scrapling, crawl4ai, firecrawl, scrapegraph, agentql,
+                           managed fetch, semantic content, agentic
   extraction/              schema_builder, field_mapper, dedupe, normalizer
   data/                    cleaner, validator, profiler, dictionary, provenance
   export/                  exporters with per-format capability checks

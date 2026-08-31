@@ -51,10 +51,7 @@ class FixtureHandler(SimpleHTTPRequestHandler):
             self.wfile.write(body)
             return
         if parts.path == "/data/indicators.csv":
-            body = (
-                b"country,year,value\n"
-                b"Algeria,2023,9.3\nMorocco,2023,6.1\nTunisia,2023,9.3\n"
-            )
+            body = b"country,year,value\nAlgeria,2023,9.3\nMorocco,2023,6.1\nTunisia,2023,9.3\n"
             self.send_response(200)
             self.send_header("Content-Type", "text/csv")
             self.send_header("Content-Length", str(len(body)))

@@ -25,6 +25,7 @@ from .extraction.normalizer import add_provenance_columns, records_to_frame
 from .logging_config import RunLogger, get_logger
 from .models import (
     CandidateDataset,
+    Confidence,
     ExtractionRequest,
     ExtractionResult,
     ExtractionSchema,
@@ -40,13 +41,29 @@ from .storage import run_store
 
 PRESETS: dict[str, dict[str, Any]] = {
     "auto": {"label_en": "Auto detect", "label_ar": "اكتشاف تلقائي", "kinds": []},
-    "table": {"label_en": "Table / statistical table", "label_ar": "جدول / جدول إحصائي", "kinds": ["table"]},
-    "listings": {"label_en": "Listings / repeated cards", "label_ar": "قوائم / بطاقات متكررة", "kinds": ["repeated"]},
+    "table": {
+        "label_en": "Table / statistical table",
+        "label_ar": "جدول / جدول إحصائي",
+        "kinds": ["table"],
+    },
+    "listings": {
+        "label_en": "Listings / repeated cards",
+        "label_ar": "قوائم / بطاقات متكررة",
+        "kinds": ["repeated"],
+    },
     "article": {"label_en": "Article / news", "label_ar": "مقال / أخبار", "kinds": ["article"]},
     "api": {"label_en": "API / JSON", "label_ar": "API / JSON", "kinds": ["api"]},
     "multipage": {"label_en": "Multi-page section", "label_ar": "قسم متعدد الصفحات", "kinds": []},
-    "document": {"label_en": "PDF / report / document", "label_ar": "PDF / تقرير / مستند", "kinds": ["document"]},
-    "research": {"label_en": "Economic / research data", "label_ar": "بيانات اقتصادية / بحثية", "kinds": ["api", "table", "file"]},
+    "document": {
+        "label_en": "PDF / report / document",
+        "label_ar": "PDF / تقرير / مستند",
+        "kinds": ["document"],
+    },
+    "research": {
+        "label_en": "Economic / research data",
+        "label_ar": "بيانات اقتصادية / بحثية",
+        "kinds": ["api", "table", "file"],
+    },
 }
 
 
@@ -88,6 +105,8 @@ def analyze(
     respect_robots: bool = True,
     use_browser: bool | None = None,
     preset: str = "auto",
+    allow_ai: bool = False,
+    ai_provider: str | None = None,
 ) -> AnalysisOutcome:
     """Step 1-2: guard, profile and propose candidate datasets."""
     run_id = run_store.new_run_id()
@@ -116,6 +135,32 @@ def analyze(
         if schema.fields:
             logger.log("service", "schema_parsed", fields=len(schema.fields))
 
+    # Deterministic parsing first. AI only fills a gap it could not close, and
+    # only when the researcher enabled it.
+    if allow_ai and (schema is None or not schema.fields):
+        from .ai import service as ai_service
+
+        provider = ai_service.get_provider(ai_provider)
+        if provider is not None:
+            sample = "\n".join(
+                str(row)
+                for candidate in profile.candidates[:2]
+                for row in candidate.sample_rows[:5]
+            )
+            proposed = ai_service.propose_schema(
+                user_goal=user_goal or "",
+                page_content=sample or (profile.title or ""),
+                provider_name=ai_provider,
+            )
+            if proposed and proposed.fields:
+                schema = proposed
+                logger.log(
+                    "service",
+                    "schema_proposed_by_ai",
+                    provider=provider.name,
+                    fields=len(proposed.fields),
+                )
+
     if not profile.candidates:
         raise ScraperError(
             ErrorCode.NO_DATA_DETECTED,
@@ -136,6 +181,31 @@ def preflight(
     pages = max(1, min(request.max_pages, SETTINGS.limits.hard_max_pages))
     if request.pagination.type.value == "none" and not request.crawl.enabled:
         pages = 1
+    from .ai import service as ai_service
+    from .providers import registry as provider_registry
+
+    configured = provider_registry.configured_summary()
+    ai_provider = ai_service.get_provider(request.ai_provider) if request.allow_ai else None
+
+    # An AI call is only *possible* when the engine can use one and AI is on.
+    ai_capable = engine.name in {"crawl4ai", "scrapegraph", "agentql"} or not engine.deterministic
+    estimated_ai_calls = 1 if (ai_provider is not None and ai_capable) else 0
+
+    remote = configured.get("remote_browser") if decision.uses_browser else None
+    cloud_provider = "None"
+    if decision.uses_cloud:
+        cloud_provider = engine.label
+    elif remote:
+        cloud_provider = f"{remote} (remote browser)"
+
+    privacy = "Everything stays on this machine."
+    if decision.uses_cloud:
+        privacy = f"Page content is sent to {engine.label}."
+    elif estimated_ai_calls:
+        privacy = f"A bounded page excerpt is sent to {ai_provider.label}."
+    elif remote:
+        privacy = f"Pages are loaded by {remote}, not on this machine."
+
     return {
         "detected_source": candidate.title if candidate else "Unknown",
         "selected_method": engine.label,
@@ -148,10 +218,14 @@ def preflight(
         "preview_rows": min(SETTINGS.limits.max_preview_rows, candidate.rows_estimate or 100)
         if candidate
         else 100,
-        "ai_calls": 0,
-        "cloud_provider": engine.name if decision.uses_cloud else "None",
+        "ai_calls": estimated_ai_calls,
+        "ai_provider": ai_provider.label if ai_provider else "None",
+        "cloud_provider": cloud_provider,
+        "remote_browser": remote or "None",
         "uses_browser": decision.uses_browser,
+        "uses_agentic": engine.name in {"stagehand", "browser_use", "skyvern"},
         "cost_mode": engine.cost_mode,
+        "privacy_note": privacy,
         "robots_status": profile.robots.state if profile else "not_checked",
         "local_only_available": engine.cost_mode != "metered",
     }
@@ -194,8 +268,33 @@ def extract(
 
     mapping: field_mapper.MappingReport | None = None
     working = raw_df
+    ai_usage: dict[str, Any] = {}
     if schema and schema.fields:
         mapping = field_mapper.map_schema(schema, [str(c) for c in raw_df.columns], raw_df)
+
+        # Deterministic mapping first; a model is asked only about what is left.
+        if mapping.unmatched and request.allow_ai:
+            from .ai import service as ai_service
+
+            usage_log = ai_service.AIUsageLog()
+            proposed = ai_service.map_fields(
+                requested=mapping.unmatched,
+                columns=[str(c) for c in raw_df.columns],
+                sample_rows=raw_df.head(3).astype(str).to_dict(orient="records"),
+                provider_name=request.ai_provider,
+                usage_log=usage_log,
+            )
+            if proposed:
+                for item in mapping.mappings:
+                    column = proposed.get(item.requested)
+                    if item.matched_column is None and column:
+                        item.matched_column = column
+                        item.method = "ai_semantic"
+                        item.confidence = Confidence.LOW
+                mapping.unmatched = [m.requested for m in mapping.mappings if not m.matched_column]
+                ai_usage = usage_log.as_dict()
+                logger.log("service", "ai_field_mapping_used", mapped=len(proposed))
+
         if any(m.matched_column for m in mapping.mappings):
             working = field_mapper.apply_mapping(raw_df, mapping)
 
@@ -235,6 +334,9 @@ def extract(
     data_dictionary = dictionary_module.build(
         working, schema=schema, source_url=request.url, engine=result.engine
     )
+
+    if ai_usage:
+        result.metadata.setdefault("ai_usage", ai_usage)
 
     warnings = list(result.warnings)
     if mapping and mapping.unmatched:

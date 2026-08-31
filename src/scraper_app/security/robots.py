@@ -66,7 +66,9 @@ def fetch_robots(url: str, fetcher=None) -> tuple[RobotsStatus, object | None]:
         status_code, text = fetcher(robots_url)
     except Exception as exc:  # network failure -> unknown, never fatal
         status = RobotsStatus(
-            state="unknown", robots_url=robots_url, detail=f"robots.txt unavailable ({exc.__class__.__name__})"
+            state="unknown",
+            robots_url=robots_url,
+            detail=f"robots.txt unavailable ({exc.__class__.__name__})",
         )
         _CACHE[robots_url] = (now, status, None)
         return status, None
@@ -109,7 +111,9 @@ def check(url: str, user_agent: str | None = None, fetcher=None) -> RobotsStatus
         delay = parser.crawl_delay(agent)  # type: ignore[union-attr]
         crawl_delay = float(delay) if delay else None
     except Exception:
-        return status.model_copy(update={"state": "unknown", "detail": "robots.txt could not be interpreted."})
+        return status.model_copy(
+            update={"state": "unknown", "detail": "robots.txt could not be interpreted."}
+        )
 
     return status.model_copy(
         update={

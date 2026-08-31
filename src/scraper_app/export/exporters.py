@@ -54,7 +54,9 @@ def _flatten_for_export(frame: pd.DataFrame) -> pd.DataFrame:
     """Stringify nested values that only tabular-native formats can hold."""
     result = frame.copy()
     for column in result.columns:
-        if not pd.api.types.is_numeric_dtype(result[column]) and not pd.api.types.is_datetime64_any_dtype(result[column]):
+        if not pd.api.types.is_numeric_dtype(
+            result[column]
+        ) and not pd.api.types.is_datetime64_any_dtype(result[column]):
             result[column] = result[column].map(
                 lambda v: str(v) if isinstance(v, (dict, list, set, tuple)) else v
             )
@@ -73,9 +75,13 @@ def _check_excel(frame: pd.DataFrame) -> FormatSupport:
     if not base.ok:
         return base
     if not (_package_available("xlsxwriter") or _package_available("openpyxl")):
-        return FormatSupport(False, "Excel export needs xlsxwriter or openpyxl.", "pip install xlsxwriter")
+        return FormatSupport(
+            False, "Excel export needs xlsxwriter or openpyxl.", "pip install xlsxwriter"
+        )
     if len(frame) > 1_048_575:
-        return FormatSupport(False, "Excel supports at most 1,048,575 data rows. Use CSV or Parquet.")
+        return FormatSupport(
+            False, "Excel supports at most 1,048,575 data rows. Use CSV or Parquet."
+        )
     if frame.shape[1] > 16_384:
         return FormatSupport(False, "Excel supports at most 16,384 columns.")
     return FormatSupport(True)
@@ -104,7 +110,8 @@ def _check_stata(frame: pd.DataFrame) -> FormatSupport:
         )
     if any(pd.api.types.is_datetime64tz_dtype(frame[c]) for c in frame.columns):
         return FormatSupport(
-            False, "Stata cannot store timezone-aware datetimes. Convert them or export CSV/Parquet."
+            False,
+            "Stata cannot store timezone-aware datetimes. Convert them or export CSV/Parquet.",
         )
     return FormatSupport(True)
 
@@ -117,7 +124,9 @@ def _check_spss(frame: pd.DataFrame) -> FormatSupport:
         return FormatSupport(False, "SPSS export needs pyreadstat.", "pip install pyreadstat")
     # SPSS variable names must begin with a letter: the provenance columns
     # (_source_url, ...) are the usual reason this format is unavailable.
-    invalid = [c for c in frame.columns if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.@$#]{0,63}", str(c))]
+    invalid = [
+        c for c in frame.columns if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.@$#]{0,63}", str(c))
+    ]
     if invalid:
         provenance = [c for c in invalid if str(c).startswith("_")]
         hint = (
@@ -179,11 +188,19 @@ def to_excel(frame: pd.DataFrame) -> bytes:
 
 
 def to_json(frame: pd.DataFrame) -> bytes:
-    return _flatten_for_export(frame).to_json(orient="records", force_ascii=False, indent=2).encode("utf-8")
+    return (
+        _flatten_for_export(frame)
+        .to_json(orient="records", force_ascii=False, indent=2)
+        .encode("utf-8")
+    )
 
 
 def to_jsonl(frame: pd.DataFrame) -> bytes:
-    return _flatten_for_export(frame).to_json(orient="records", force_ascii=False, lines=True).encode("utf-8")
+    return (
+        _flatten_for_export(frame)
+        .to_json(orient="records", force_ascii=False, lines=True)
+        .encode("utf-8")
+    )
 
 
 def to_parquet(frame: pd.DataFrame) -> bytes:
@@ -276,26 +293,66 @@ def to_markdown(frame: pd.DataFrame) -> bytes:
 
 FORMATS: list[ExportFormat] = [
     ExportFormat("csv", "CSV", ".csv", "text/csv", "common", to_csv, _always),
-    ExportFormat("xlsx", "Excel", ".xlsx",
-                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                 "common", to_excel, _check_excel),
-    ExportFormat("parquet", "Parquet", ".parquet", "application/octet-stream", "common",
-                 to_parquet, _check_parquet),
+    ExportFormat(
+        "xlsx",
+        "Excel",
+        ".xlsx",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "common",
+        to_excel,
+        _check_excel,
+    ),
+    ExportFormat(
+        "parquet",
+        "Parquet",
+        ".parquet",
+        "application/octet-stream",
+        "common",
+        to_parquet,
+        _check_parquet,
+    ),
     ExportFormat("json", "JSON", ".json", "application/json", "common", to_json, _always),
-    ExportFormat("jsonl", "JSON Lines", ".jsonl", "application/x-ndjson", "common", to_jsonl, _always),
+    ExportFormat(
+        "jsonl", "JSON Lines", ".jsonl", "application/x-ndjson", "common", to_jsonl, _always
+    ),
     ExportFormat("tsv", "TSV", ".tsv", "text/tab-separated-values", "common", to_tsv, _always),
-    ExportFormat("feather", "Feather", ".feather", "application/octet-stream", "common",
-                 to_feather, _check_parquet),
-    ExportFormat("dta", "Stata (.dta)", ".dta", "application/octet-stream", "research",
-                 to_stata, _check_stata, "Stata 14+ format (version 118)."),
-    ExportFormat("sav", "SPSS (.sav)", ".sav", "application/octet-stream", "research",
-                 to_spss, _check_spss),
-    ExportFormat("rds", "R (.rds)", ".rds", "application/octet-stream", "research",
-                 to_rds, _check_rds),
-    ExportFormat("sqlite", "SQLite", ".sqlite", "application/vnd.sqlite3", "database",
-                 to_sqlite, _always),
-    ExportFormat("duckdb", "DuckDB", ".duckdb", "application/octet-stream", "database",
-                 to_duckdb, _check_duckdb),
+    ExportFormat(
+        "feather",
+        "Feather",
+        ".feather",
+        "application/octet-stream",
+        "common",
+        to_feather,
+        _check_parquet,
+    ),
+    ExportFormat(
+        "dta",
+        "Stata (.dta)",
+        ".dta",
+        "application/octet-stream",
+        "research",
+        to_stata,
+        _check_stata,
+        "Stata 14+ format (version 118).",
+    ),
+    ExportFormat(
+        "sav", "SPSS (.sav)", ".sav", "application/octet-stream", "research", to_spss, _check_spss
+    ),
+    ExportFormat(
+        "rds", "R (.rds)", ".rds", "application/octet-stream", "research", to_rds, _check_rds
+    ),
+    ExportFormat(
+        "sqlite", "SQLite", ".sqlite", "application/vnd.sqlite3", "database", to_sqlite, _always
+    ),
+    ExportFormat(
+        "duckdb",
+        "DuckDB",
+        ".duckdb",
+        "application/octet-stream",
+        "database",
+        to_duckdb,
+        _check_duckdb,
+    ),
     ExportFormat("html", "HTML table", ".html", "text/html", "common", to_html, _always),
     ExportFormat("md", "Markdown table", ".md", "text/markdown", "common", to_markdown, _always),
 ]

@@ -74,7 +74,9 @@ def render() -> None:
             expanded=False,
         ):
             st.session_state["respect_robots"] = st.checkbox(
-                "Respect robots.txt (recommended)" if lang == "en" else "احترام robots.txt (موصى به)",
+                "Respect robots.txt (recommended)"
+                if lang == "en"
+                else "احترام robots.txt (موصى به)",
                 value=st.session_state.get("respect_robots", True),
                 help=(
                     "robots.txt is the site owner's access signal. Turning this off is only for "
@@ -84,7 +86,9 @@ def render() -> None:
                 ),
             )
             st.session_state["allow_browser"] = st.checkbox(
-                "Allow browser rendering when needed" if lang == "en" else "السماح بعرض المتصفح عند الحاجة",
+                "Allow browser rendering when needed"
+                if lang == "en"
+                else "السماح بعرض المتصفح عند الحاجة",
                 value=st.session_state.get("allow_browser", True),
                 help="Runs a local Chromium only when the data is not in the static HTML."
                 if lang == "en"
@@ -95,6 +99,45 @@ def render() -> None:
                 if lang == "en"
                 else "السماح بمزودي السحابة (يرسل محتوى الصفحة خارج الجهاز)",
                 value=st.session_state.get("allow_cloud", False),
+            )
+
+            from ..ai import service as ai_service
+
+            ai_ready = ai_service.available_providers()
+            st.session_state["allow_ai"] = st.checkbox(
+                "Allow AI assistance when deterministic extraction is not enough"
+                if lang == "en"
+                else "السماح بمساعدة الذكاء الاصطناعي عندما لا يكفي الاستخراج الحتمي",
+                value=st.session_state.get("allow_ai", False),
+                disabled=not ai_ready,
+                help=(
+                    "No model provider is configured — add a key to enable this."
+                    if not ai_ready
+                    else "A bounded page excerpt is sent to the model. Deterministic parsing is always tried first."
+                )
+                if lang == "en"
+                else (
+                    "لا يوجد مزود نماذج مضبوط — أضف مفتاحًا لتفعيل هذا."
+                    if not ai_ready
+                    else "يُرسل مقتطف محدود من الصفحة إلى النموذج. يُجرَّب التحليل الحتمي أولًا دائمًا."
+                ),
+            )
+            if ai_ready and st.session_state.get("allow_ai"):
+                st.session_state["ai_provider"] = st.selectbox(
+                    t("ai_provider", lang),
+                    options=[p.name for p in ai_ready],
+                    format_func=lambda name: next(
+                        (p.label for p in ai_ready if p.name == name), name
+                    ),
+                    key="ai_provider_select",
+                )
+            st.session_state["allow_agentic"] = st.checkbox(
+                t("agentic_mode", lang),
+                value=st.session_state.get("allow_agentic", False),
+                help="Only for pages that genuinely need clicking through steps. Never signs in "
+                "or bypasses access controls."
+                if lang == "en"
+                else "فقط للصفحات التي تحتاج فعلًا للنقر عبر خطوات. لا يسجل الدخول ولا يتجاوز ضوابط الوصول.",
             )
 
         run_column, demo_column = st.columns([2, 1])
@@ -155,7 +198,9 @@ def render() -> None:
     if analyze_clicked:
         if not (url or "").strip():
             st.warning(
-                "Please paste a website address first." if lang == "en" else "الرجاء لصق عنوان الموقع أولًا."
+                "Please paste a website address first."
+                if lang == "en"
+                else "الرجاء لصق عنوان الموقع أولًا."
             )
             return
         st.session_state["url"] = url
@@ -168,13 +213,19 @@ def render() -> None:
             "Analyzing the source…" if lang == "en" else "جارٍ تحليل المصدر…", expanded=True
         ) as status:
             try:
-                st.write("Checking the address and access rules…" if lang == "en" else "فحص العنوان وقواعد الوصول…")
+                st.write(
+                    "Checking the address and access rules…"
+                    if lang == "en"
+                    else "فحص العنوان وقواعد الوصول…"
+                )
                 outcome = analyze(
                     url,
                     user_goal=goal,
                     respect_robots=st.session_state.get("respect_robots", True),
                     use_browser=None,
                     preset=preset,
+                    allow_ai=st.session_state.get("allow_ai", False),
+                    ai_provider=st.session_state.get("ai_provider"),
                 )
                 st.write(
                     f"Found {len(outcome.profile.candidates)} candidate dataset(s)."
@@ -188,7 +239,9 @@ def render() -> None:
                     label="Analysis complete" if lang == "en" else "اكتمل التحليل", state="complete"
                 )
             except Exception as exc:  # shown as a readable panel, never a traceback
-                status.update(label="Analysis failed" if lang == "en" else "فشل التحليل", state="error")
+                status.update(
+                    label="Analysis failed" if lang == "en" else "فشل التحليل", state="error"
+                )
                 st.session_state["last_error"] = exc
                 state.mark("source", "review")
                 st.stop()

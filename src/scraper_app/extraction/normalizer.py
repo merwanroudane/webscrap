@@ -31,7 +31,9 @@ def safe_column_name(name: str, index: int = 0) -> str:
     return ("_" + cleaned if provenance else cleaned)[:64]
 
 
-def standardize_columns(frame: pd.DataFrame, lower: bool = True) -> tuple[pd.DataFrame, dict[str, str]]:
+def standardize_columns(
+    frame: pd.DataFrame, lower: bool = True
+) -> tuple[pd.DataFrame, dict[str, str]]:
     """Return a frame with safe, unique column names plus the rename map."""
     mapping: dict[str, str] = {}
     used: set[str] = set()
@@ -69,7 +71,9 @@ def hide_provenance_columns(frame: pd.DataFrame) -> pd.DataFrame:
     return frame[[c for c in frame.columns if not str(c).startswith("_")]]
 
 
-def records_to_frame(records: list[dict[str, Any]], columns: list[str] | None = None) -> pd.DataFrame:
+def records_to_frame(
+    records: list[dict[str, Any]], columns: list[str] | None = None
+) -> pd.DataFrame:
     """Stable-order DataFrame construction shared by engines and the run store."""
     if not records:
         return pd.DataFrame(columns=columns or [])

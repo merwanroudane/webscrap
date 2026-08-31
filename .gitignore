@@ -15,3 +15,6 @@ build/
 
 # Internal planning document — kept locally, not published
 smart_research_web_scraper_master_plan.md
+
+# Audit/directive documents are working inputs, not published artifacts
+webscrap_*.md

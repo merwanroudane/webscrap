@@ -20,7 +20,9 @@ from .structured_data import find_record_arrays
 _URL_IN_SCRIPT = re.compile(
     r"""["'](?P<url>(?:https?:)?//[^"'\s]+?/(?:api|v\d|rest|graphql|data|json)[^"'\s]*|/(?:api|rest|v\d|data)/[^"'\s]{2,120})["']"""
 )
-_API_PATH_HINT = re.compile(r"(?i)(/api/|/rest/|/v\d+/|/data/|\.json(\?|$)|format=json|output=json)")
+_API_PATH_HINT = re.compile(
+    r"(?i)(/api/|/rest/|/v\d+/|/data/|\.json(\?|$)|format=json|output=json)"
+)
 _DATASET_KEY_HINT = re.compile(
     r"(?i)^(data|items|results|records|rows|values|observations|series|entries|features|content|list|docs)$"
 )
@@ -75,7 +77,11 @@ def describe_json_payload(payload: Any) -> tuple[str | None, list[str], int | No
     arrays = find_record_arrays(payload)
     if arrays:
         best = arrays[0]
-        return (None if best["path"] == "$" else best["path"]), list(best["keys"]), int(best["count"])
+        return (
+            (None if best["path"] == "$" else best["path"]),
+            list(best["keys"]),
+            int(best["count"]),
+        )
     if isinstance(payload, dict):
         return None, list(payload.keys())[:60], None
     if isinstance(payload, list):

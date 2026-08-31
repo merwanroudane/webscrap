@@ -1,0 +1,56 @@
+name: security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Dependency advisories move independently of our commits.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  bandit:
+    name: bandit (static analysis)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv venv --python 3.12
+      - run: uv pip install bandit
+      - name: Scan application source
+        run: uv run bandit -r src/scraper_app -ll -q
+
+  pip-audit:
+    name: pip-audit (known vulnerabilities)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv venv --python 3.12
+      - run: |
+          uv pip install -r requirements.txt
+          uv pip install pip-audit
+      # Advisories appear independently of our commits, so this reports
+      # without blocking the build.
+      - run: uv run pip-audit
+        continue-on-error: true
+
+  guard-tests:
+    name: SSRF and secret-hygiene tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv venv --python 3.12
+      - run: |
+          uv pip install -r requirements.txt
+          uv pip install pytest pytest-asyncio respx responses
+      # These must pass on their own: they are the blocking security contract.
+      - run: uv run pytest tests/unit/test_security.py -q

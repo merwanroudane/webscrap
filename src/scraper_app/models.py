@@ -157,6 +157,8 @@ class ExtractionRequest(BaseModel):
     respect_robots: bool = True
     allow_browser: bool = True
     allow_ai: bool = False
+    ai_mode: Literal["disabled", "auto", "always"] = "auto"
+    ai_provider: str | None = None
     allow_cloud: bool = False
     allow_agentic: bool = False
     engine_preference: str | None = None

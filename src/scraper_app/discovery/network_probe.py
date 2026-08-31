@@ -21,8 +21,20 @@ from . import api_detector
 
 _IGNORED_RESOURCE_TYPES = {"image", "media", "font", "stylesheet", "manifest", "other"}
 _IGNORED_EXTENSIONS = (
-    ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".ico", ".css", ".woff",
-    ".woff2", ".ttf", ".mp4", ".webm", ".map",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".svg",
+    ".webp",
+    ".ico",
+    ".css",
+    ".woff",
+    ".woff2",
+    ".ttf",
+    ".mp4",
+    ".webm",
+    ".map",
 )
 
 

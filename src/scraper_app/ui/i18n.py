@@ -53,7 +53,10 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "Paste the page that shows the data you need. Only public http/https addresses are allowed.",
         "ar": "الصق الصفحة التي تعرض البيانات المطلوبة. يُسمح فقط بعناوين http/https العامة.",
     },
-    "goal_label": {"en": "What data do you need? (optional)", "ar": "ما البيانات التي تحتاجها؟ (اختياري)"},
+    "goal_label": {
+        "en": "What data do you need? (optional)",
+        "ar": "ما البيانات التي تحتاجها؟ (اختياري)",
+    },
     "goal_placeholder": {
         "en": "Example: Extract country, year, inflation rate, GDP and source link.",
         "ar": "مثال: استخرج الدولة، السنة، معدل التضخم، الناتج المحلي، ورابط المصدر.",
@@ -116,7 +119,10 @@ STRINGS: dict[str, dict[str, str]] = {
     "clean_validate": {"en": "Clean & validate", "ar": "التنظيف والتحقق"},
     "apply_cleaning": {"en": "Apply cleaning", "ar": "طبّق التنظيف"},
     "reset_cleaning": {"en": "Reset to extracted data", "ar": "إعادة إلى البيانات المستخرجة"},
-    "download_bundle": {"en": "Download the complete research package (ZIP)", "ar": "نزّل حزمة البحث الكاملة (ZIP)"},
+    "download_bundle": {
+        "en": "Download the complete research package (ZIP)",
+        "ar": "نزّل حزمة البحث الكاملة (ZIP)",
+    },
     "common_formats": {"en": "Common", "ar": "شائعة"},
     "research_formats": {"en": "Research software", "ar": "برامج بحثية"},
     "database_formats": {"en": "Database", "ar": "قواعد بيانات"},
@@ -128,6 +134,16 @@ STRINGS: dict[str, dict[str, str]] = {
     "history": {"en": "History", "ar": "السجل"},
     "engines": {"en": "Engines & keys", "ar": "المحركات والمفاتيح"},
     "help": {"en": "Help", "ar": "المساعدة"},
+    "find_sources": {"en": "Find sources", "ar": "البحث عن مصادر"},
+    "search_sources": {"en": "Search for sources", "ar": "ابحث عن مصادر"},
+    "analyze_this": {"en": "Analyze this", "ar": "حلّل هذا"},
+    "ai_assistance": {"en": "AI assistance", "ar": "مساعدة الذكاء الاصطناعي"},
+    "ai_mode": {"en": "When may a model be used?", "ar": "متى يُسمح باستخدام نموذج؟"},
+    "ai_provider": {"en": "Model provider", "ar": "مزود النموذج"},
+    "agentic_mode": {
+        "en": "Allow agentic browsing for multi-step pages",
+        "ar": "السماح بالتصفح الوكيل للصفحات متعددة الخطوات",
+    },
     "what_next": {"en": "What you can do next", "ar": "ما يمكنك فعله الآن"},
     "no_results_yet": {
         "en": "No dataset yet — start from the Home page.",

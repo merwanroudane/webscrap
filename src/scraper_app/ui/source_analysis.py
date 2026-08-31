@@ -128,7 +128,8 @@ def _render_candidates(profile, lang: str) -> None:
                 )
                 if candidate.columns:
                     st.caption(
-                        f"{t('columns', lang)}: " + ", ".join(str(c) for c in candidate.columns[:10])
+                        f"{t('columns', lang)}: "
+                        + ", ".join(str(c) for c in candidate.columns[:10])
                     )
                 if candidate.sample_rows:
                     with st.expander(t("sample", lang), expanded=False):
@@ -155,7 +156,10 @@ def _render_overview(profile, lang: str) -> None:
     key_value("Page title", profile.title or "—")
     key_value(t("recommended_method", lang), profile.recommended_engine or "—")
     key_value("Structured metadata", ", ".join(profile.structured_types[:8]) or "none found")
-    key_value("Pagination", f"{profile.pagination.type.value} ({profile.pagination.detected_from or 'not detected'})")
+    key_value(
+        "Pagination",
+        f"{profile.pagination.type.value} ({profile.pagination.detected_from or 'not detected'})",
+    )
     key_value("Readable text", f"{profile.article_chars:,} characters")
     key_value("Analysis time", f"{profile.elapsed_ms:,} ms")
 

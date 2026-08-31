@@ -111,7 +111,9 @@ class ArticleEngine(BaseEngine):
         started = time.monotonic()
         payload = (candidate.payload if candidate else {}) or {}
         urls: list[str] = list(payload.get("urls") or [request.url])
-        max_pages = min(limit_pages or request.max_pages or 1, len(urls), SETTINGS.limits.hard_max_pages)
+        max_pages = min(
+            limit_pages or request.max_pages or 1, len(urls), SETTINGS.limits.hard_max_pages
+        )
         urls = urls[:max_pages]
 
         records: list[dict[str, Any]] = []

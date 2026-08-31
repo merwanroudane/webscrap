@@ -85,8 +85,25 @@ def _strip_www(netloc: str) -> str:
     return netloc[4:] if netloc.startswith("www.") else netloc
 
 
+def registrable_domain(url: str) -> str:
+    """Return the registrable domain, using tldextract when it is installed.
+
+    Without it, subdomain differences look like different sites; with it,
+    news.example.co.uk and www.example.co.uk are correctly the same source.
+    """
+    try:
+        import tldextract
+
+        parts = tldextract.extract(url)
+        if parts.domain and parts.suffix:
+            return f"{parts.domain}.{parts.suffix}".lower()
+    except Exception:
+        pass
+    return _strip_www(urlsplit(url).netloc.lower())
+
+
 def _same_host(a: str, b: str) -> bool:
-    return _strip_www(urlsplit(a).netloc.lower()) == _strip_www(urlsplit(b).netloc.lower())
+    return registrable_domain(a) == registrable_domain(b)
 
 
 def profile_source(
@@ -161,7 +178,9 @@ def profile_source(
                 candidate.confidence = Confidence.HIGH
                 profile.api_candidates.append(candidate)
         profile.candidates = _candidates_for_file(profile)
-        profile.recommended_engine = "direct_file" if file_detector.is_tabular_format(fmt) else "document"
+        profile.recommended_engine = (
+            "direct_file" if file_detector.is_tabular_format(fmt) else "document"
+        )
         profile.difficulty = "low"
         profile.confidence = Confidence.HIGH
         profile.elapsed_ms = int((time.monotonic() - started) * 1000)
@@ -196,7 +215,12 @@ def profile_source(
         profile.elapsed_ms = int((time.monotonic() - started) * 1000)
         return profile
 
-    if content_type in {"application/xml", "text/xml", "application/rss+xml", "application/atom+xml"}:
+    if content_type in {
+        "application/xml",
+        "text/xml",
+        "application/rss+xml",
+        "application/atom+xml",
+    }:
         profile.is_xml = True
         rows = sitemap.parse_feed(response.content)
         if rows:
@@ -301,7 +325,10 @@ def profile_source(
         js_evidence.append("Data appears to be embedded as JSON and rendered by scripts.")
     profile.js_evidence = js_evidence
     profile.requires_js = len(js_evidence) >= 2 or (
-        not profile.has_tables and not profile.repeated_patterns and not profile.api_candidates and len(text) < 800
+        not profile.has_tables
+        and not profile.repeated_patterns
+        and not profile.api_candidates
+        and len(text) < 800
     )
 
     # ------------------------------------------------------------- browser probe
@@ -417,9 +444,7 @@ def _build_candidates(profile: SourceProfile, frames: list) -> list[CandidateDat
 
     for table in profile.tables:
         frame = frames[table.index] if table.index < len(frames) else None
-        sample = (
-            frame.head(5).astype(str).to_dict(orient="records") if frame is not None else []
-        )
+        sample = frame.head(5).astype(str).to_dict(orient="records") if frame is not None else []
         title = table.caption or table.preceding_heading or f"Table {table.index + 1}"
         candidates.append(
             CandidateDataset(
@@ -535,8 +560,12 @@ def _build_candidates(profile: SourceProfile, frames: list) -> list[CandidateDat
     return candidates
 
 
-def build_field_specs(columns: list[str], name_source: NameSource = NameSource.SOURCE_NATIVE) -> list[FieldSpec]:
+def build_field_specs(
+    columns: list[str], name_source: NameSource = NameSource.SOURCE_NATIVE
+) -> list[FieldSpec]:
     return [
-        FieldSpec(name=str(col), label=str(col), name_source=name_source, confidence=Confidence.HIGH)
+        FieldSpec(
+            name=str(col), label=str(col), name_source=name_source, confidence=Confidence.HIGH
+        )
         for col in columns
     ]

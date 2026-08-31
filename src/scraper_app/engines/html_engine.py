@@ -86,7 +86,9 @@ class RepeatedDomEngine(BaseEngine):
         started = time.monotonic()
         payload = (candidate.payload if candidate else {}) or {}
         selector = request.selector or payload.get("selector")
-        fields = [FieldSpec(**f) for f in payload.get("fields", [])] if payload.get("fields") else []
+        fields = (
+            [FieldSpec(**f) for f in payload.get("fields", [])] if payload.get("fields") else []
+        )
         if schema and schema.fields:
             fields = schema.fields
 
@@ -133,7 +135,9 @@ class RepeatedDomEngine(BaseEngine):
             if not rows:
                 if pages_successful == 0:
                     raise ScraperError(
-                        ErrorCode.SELECTOR_NOT_FOUND if (selector or request.xpath) else ErrorCode.NO_DATA_DETECTED,
+                        ErrorCode.SELECTOR_NOT_FOUND
+                        if (selector or request.xpath)
+                        else ErrorCode.NO_DATA_DETECTED,
                         "No repeated items matched on this page.",
                     )
                 warnings.append(f"Page {pages_requested} produced no rows; stopping.")
@@ -284,7 +288,9 @@ class LinksEngine(BaseEngine):
         try:
             tree = lxml_html.fromstring(html)
         except Exception as exc:
-            raise ScraperError(ErrorCode.CONTENT_UNSUPPORTED, "The page could not be parsed.") from exc
+            raise ScraperError(
+                ErrorCode.CONTENT_UNSUPPORTED, "The page could not be parsed."
+            ) from exc
 
         pairs: list[tuple[str, str]] = []
         for anchor in tree.xpath("//a[@href]"):

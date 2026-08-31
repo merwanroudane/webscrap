@@ -45,7 +45,10 @@ def _advanced_controls(lang: str, profile) -> dict:
             "HTTP method", ["GET", "POST"], index=0, help="Most public data uses GET."
         )
         advanced["timeout"] = columns[1].number_input(
-            "Timeout (seconds)", min_value=5.0, max_value=180.0, value=float(SETTINGS.limits.http_timeout)
+            "Timeout (seconds)",
+            min_value=5.0,
+            max_value=180.0,
+            value=float(SETTINGS.limits.http_timeout),
         )
         advanced["headers_raw"] = st.text_area(
             "Extra headers (one per line, `Name: value`)",
@@ -75,7 +78,9 @@ def _advanced_controls(lang: str, profile) -> dict:
             help="Example: div.card . Leave empty to use the detected structure.",
         )
         advanced["xpath"] = st.text_input(
-            "XPath (optional)", value=advanced.get("xpath", ""), help="Used instead of the CSS selector."
+            "XPath (optional)",
+            value=advanced.get("xpath", ""),
+            help="Used instead of the CSS selector.",
         )
         advanced["records_path"] = st.text_input(
             "JSON records path",
@@ -169,6 +174,8 @@ def _build_request(lang: str) -> ExtractionRequest:
         allow_browser=st.session_state.get("allow_browser", True),
         allow_cloud=st.session_state.get("allow_cloud", False),
         allow_ai=st.session_state.get("allow_ai", False),
+        ai_provider=st.session_state.get("ai_provider"),
+        allow_agentic=st.session_state.get("allow_agentic", False),
         engine_preference=advanced.get("engine_preference"),
         selector=advanced.get("selector") or None,
         xpath=advanced.get("xpath") or None,
@@ -271,7 +278,10 @@ def render() -> None:
         if summary["uses_browser"]:
             badges.append(("Uses local browser", "warn", "◧"))
         pills(badges)
-        st.markdown(f"**{t('why_this_method', lang)}** " + (summary["why_ar"] if lang == "ar" else summary["why"]))
+        st.markdown(
+            f"**{t('why_this_method', lang)}** "
+            + (summary["why_ar"] if lang == "ar" else summary["why"])
+        )
 
     if summary["cost_mode"] == "metered":
         st.warning(
@@ -349,7 +359,9 @@ def _run(request, candidate, profile, schema, analysis, *, preview: bool, lang: 
                 preview_pages=int(st.session_state.get("preview_pages", 1)),
             )
         except Exception as exc:
-            status.update(label="Extraction failed" if lang == "en" else "فشل الاستخراج", state="error")
+            status.update(
+                label="Extraction failed" if lang == "en" else "فشل الاستخراج", state="error"
+            )
             state.show_error(
                 exc,
                 [(t("step_detect", lang), "detect"), (t("step_fields", lang), "fields")],
@@ -364,7 +376,9 @@ def _run(request, candidate, profile, schema, analysis, *, preview: bool, lang: 
         for warning in outcome.warnings[:5]:
             st.write(f"⚠ {warning}")
         status.update(
-            label="Preview ready" if preview else ("Extraction complete" if lang == "en" else "اكتمل الاستخراج"),
+            label="Preview ready"
+            if preview
+            else ("Extraction complete" if lang == "en" else "اكتمل الاستخراج"),
             state="complete",
         )
 

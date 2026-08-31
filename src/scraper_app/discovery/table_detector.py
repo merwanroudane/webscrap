@@ -33,9 +33,7 @@ def _clean_frame(df: pd.DataFrame) -> pd.DataFrame:
             or f"column_{i}"
             for i, col in enumerate(df.columns)
         ]
-    df.columns = [
-        _WS.sub(" ", str(c)).strip() or f"column_{i}" for i, c in enumerate(df.columns)
-    ]
+    df.columns = [_WS.sub(" ", str(c)).strip() or f"column_{i}" for i, c in enumerate(df.columns)]
     # De-duplicate column names deterministically.
     seen: dict[str, int] = {}
     columns: list[str] = []
@@ -98,7 +96,9 @@ def _score(df: pd.DataFrame) -> float:
     return max(0.0, min(score, 0.99))
 
 
-def detect_tables(html: str, base_url: str | None = None) -> tuple[list[TableCandidate], list[pd.DataFrame]]:
+def detect_tables(
+    html: str, base_url: str | None = None
+) -> tuple[list[TableCandidate], list[pd.DataFrame]]:
     """Return table metadata plus the parsed frames, aligned by index."""
     frames: list[pd.DataFrame] = []
     try:
@@ -145,10 +145,7 @@ def _dom_tables(table_nodes) -> list[pd.DataFrame]:
     for node in table_nodes:
         rows: list[list[str]] = []
         for tr in node.xpath(".//tr"):
-            cells = [
-                _WS.sub(" ", cell.text_content()).strip()
-                for cell in tr.xpath("./th|./td")
-            ]
+            cells = [_WS.sub(" ", cell.text_content()).strip() for cell in tr.xpath("./th|./td")]
             if cells:
                 rows.append(cells)
         if len(rows) < 2:

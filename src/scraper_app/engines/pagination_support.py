@@ -78,7 +78,10 @@ def iter_pages(
 
     for index in range(max_pages):
         page_number = plan.start + index * max(plan.step, 1)
-        if plan.type in {PaginationType.PAGE_NUMBER, PaginationType.OFFSET_LIMIT} and plan.url_template:
+        if (
+            plan.type in {PaginationType.PAGE_NUMBER, PaginationType.OFFSET_LIMIT}
+            and plan.url_template
+        ):
             value = (
                 page_number
                 if plan.type == PaginationType.PAGE_NUMBER
@@ -106,7 +109,11 @@ def iter_pages(
 
         yield Page(number=index + 1, url=url, html=html)
 
-        if plan.type in {PaginationType.NONE, PaginationType.LOAD_MORE, PaginationType.INFINITE_SCROLL}:
+        if plan.type in {
+            PaginationType.NONE,
+            PaginationType.LOAD_MORE,
+            PaginationType.INFINITE_SCROLL,
+        }:
             return
         if plan.type in {PaginationType.NEXT_LINK, PaginationType.NEXT_BUTTON}:
             nxt = _next_link(html, url, plan.next_selector)

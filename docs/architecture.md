@@ -21,7 +21,9 @@ Supporting layers:
 
 | Package | Responsibility |
 | --- | --- |
-| `discovery/` | Profiles a source and proposes `CandidateDataset` objects. |
+| `discovery/` | Profiles a source, proposes `CandidateDataset` objects, and finds candidate sources. |
+| `ai/` | Provider-independent LLM layer: protocol, providers, prompts, schema-validated structured output. Optional and off by default. |
+| `providers/` | Remote browsers, managed fetch, discovery, semantic content, document extractors, and the registry that reports their state. |
 | `extraction/` | Natural-language schema, field mapping, dedupe, normalization. |
 | `data/` | Cleaning, validation, quality profiling, dictionary, provenance. |
 | `export/` | Format builders with per-format capability checks. |
@@ -57,6 +59,21 @@ Supporting layers:
 8. **Clean** — opt-in, reversible operations run from `raw_df`, never in place.
 9. **Package** — quality report, data dictionary, provenance, recipe, generated
    script and the research ZIP.
+
+## The AI layer
+
+Deterministic parsing always runs first. A model may be consulted only when the
+researcher enabled AI *and* the deterministic path left a gap:
+
+```text
+sample page → propose schema → validate against evidence in the page
+            → deterministic extraction for every remaining page
+            → AI re-enters only on schema drift or extraction failure
+```
+
+Every reply is parsed into a Pydantic model and rejected if it fails. Proposed
+values are additionally checked against the page text, so a fabricated value
+cannot become a row. Usage and cost are recorded per run.
 
 ## Key contracts
 

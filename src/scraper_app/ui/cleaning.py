@@ -30,7 +30,9 @@ def render_panel(outcome, lang: str) -> None:
 
     columns = st.columns(3)
     with columns[0]:
-        trim = st.checkbox("Trim whitespace" if lang == "en" else "إزالة المسافات الزائدة", value=True)
+        trim = st.checkbox(
+            "Trim whitespace" if lang == "en" else "إزالة المسافات الزائدة", value=True
+        )
         missing = st.checkbox(
             "Normalize missing tokens (-, N/A, ..)" if lang == "en" else "توحيد رموز القيم الناقصة",
             value=True,
@@ -44,7 +46,9 @@ def render_panel(outcome, lang: str) -> None:
             value=False,
         )
         percentages = st.checkbox(
-            "Parse percentages (9.3% → 0.093)" if lang == "en" else "تحليل النسب المئوية (9.3% ← 0.093)",
+            "Parse percentages (9.3% → 0.093)"
+            if lang == "en"
+            else "تحليل النسب المئوية (9.3% ← 0.093)",
             value=False,
         )
         currency = st.checkbox(
@@ -73,10 +77,13 @@ def render_panel(outcome, lang: str) -> None:
             options=numeric_default,
         )
         duplicate_subset = st.multiselect(
-            "Duplicate key columns" if lang == "en" else "أعمدة مفتاح التكرار", options=numeric_default
+            "Duplicate key columns" if lang == "en" else "أعمدة مفتاح التكرار",
+            options=numeric_default,
         )
         outliers = st.checkbox(
-            "Flag outliers (never deletes rows)" if lang == "en" else "وسم القيم الشاذة (لا يحذف صفوفًا)",
+            "Flag outliers (never deletes rows)"
+            if lang == "en"
+            else "وسم القيم الشاذة (لا يحذف صفوفًا)",
             value=False,
         )
         outlier_z = st.slider("Outlier threshold |z|", 2.0, 6.0, 3.0, 0.5, disabled=not outliers)

@@ -69,7 +69,11 @@ def score_engine(
     source_fit = 0.0
     if candidate is not None:
         source_fit = candidate.score if candidate.engine == engine.name else 0.0
-        if candidate.engine != engine.name and engine.name in {"playwright", "crawl4ai", "firecrawl"}:
+        if candidate.engine != engine.name and engine.name in {
+            "playwright",
+            "crawl4ai",
+            "firecrawl",
+        }:
             # Generic renderers can serve any candidate, at a discount.
             source_fit = max(0.0, candidate.score - 0.3)
 

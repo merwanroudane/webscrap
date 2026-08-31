@@ -96,9 +96,7 @@ def test_json_ld_extraction():
 
 
 def test_flatten_record_handles_nesting():
-    flat = structured_data.flatten_record(
-        {"a": {"b": 1}, "tags": ["x", "y"], "items": [{"c": 2}]}
-    )
+    flat = structured_data.flatten_record({"a": {"b": 1}, "tags": ["x", "y"], "items": [{"c": 2}]})
     assert flat["a.b"] == 1
     assert flat["tags"] == "x, y"
     assert flat["items.0.c"] == 2
@@ -138,7 +136,9 @@ def test_infinite_scroll_hint_detected():
 
 
 def test_no_pagination_returns_none_plan():
-    assert pagination_detector.detect(BASE, "<html><body>x</body></html>").type is PaginationType.NONE
+    assert (
+        pagination_detector.detect(BASE, "<html><body>x</body></html>").type is PaginationType.NONE
+    )
 
 
 # --------------------------------------------------------------------- API/files
@@ -159,7 +159,10 @@ def test_api_candidates_from_html_scripts():
 
 def test_cursor_field_detection():
     assert api_detector.detect_cursor_field({"next_cursor": "abc"}) == "next_cursor"
-    assert api_detector.detect_cursor_field({"meta": {"next_page_token": "t"}}) == "meta.next_page_token"
+    assert (
+        api_detector.detect_cursor_field({"meta": {"next_page_token": "t"}})
+        == "meta.next_page_token"
+    )
     assert api_detector.detect_cursor_field({"data": []}) is None
 
 
@@ -184,7 +187,11 @@ def test_content_type_wins_over_extension():
 
 def test_collect_file_links_labels_documents():
     files = file_detector.collect_file_links(
-        [("https://x.org/a.csv", "Data"), ("https://x.org/b.pdf", "Report"), ("https://x.org/c", "Page")]
+        [
+            ("https://x.org/a.csv", "Data"),
+            ("https://x.org/b.pdf", "Report"),
+            ("https://x.org/c", "Page"),
+        ]
     )
     kinds = {f["url"]: f["kind"] for f in files}
     assert kinds["https://x.org/a.csv"] == "data"

@@ -9,7 +9,9 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
+from ..ai import service as ai_service
 from ..config import PROVIDER_ENV_KEYS, SETTINGS, has_credentials
+from ..providers import registry as provider_registry
 from ..routing.capability_registry import engine_status_table
 from . import state
 from .i18n import t
@@ -17,8 +19,10 @@ from .theme import card, note, pills
 
 _STATE_LABEL = {
     "ready": ("Ready", "ok", "✓"),
-    "optional": ("Optional", "warn", "○"),
+    "not_configured": ("Not configured", "warn", "◍"),
+    "optional": ("Not installed", "warn", "○"),
     "catalogue": ("Catalogue", "neutral", "–"),
+    "blocked": ("Blocked", "err", "✕"),
 }
 
 
@@ -32,14 +36,18 @@ def render() -> None:
     )
 
     rows = engine_status_table()
-    ready = sum(1 for row in rows if row.state == "ready")
-    optional = sum(1 for row in rows if row.state == "optional")
-    catalogue = sum(1 for row in rows if row.state == "catalogue")
+    counts = {
+        state: sum(1 for row in rows if row.state == state)
+        for state, _ in [
+            (s, None) for s in ("ready", "not_configured", "optional", "catalogue", "blocked")
+        ]
+    }
     pills(
         [
-            (f"{ready} ready", "ok", "✓"),
-            (f"{optional} optional", "warn", "○"),
-            (f"{catalogue} catalogued", "neutral", "–"),
+            (f"{counts['ready']} ready", "ok", "✓"),
+            (f"{counts['not_configured']} not configured", "warn", "◍"),
+            (f"{counts['optional']} not installed", "warn", "○"),
+            (f"{counts['catalogue']} catalogued", "neutral", "–"),
         ]
     )
 
@@ -48,7 +56,9 @@ def render() -> None:
             {
                 "engine": row.label,
                 "type": row.type,
-                "status": _STATE_LABEL[row.state][2] + " " + _STATE_LABEL[row.state][0],
+                "status": _STATE_LABEL.get(row.state, ("?", "neutral", "?"))[2]
+                + " "
+                + _STATE_LABEL.get(row.state, (row.state, "neutral", "?"))[0],
                 "detail": row.detail,
                 "cost": row.cost_mode,
                 "setup": row.install_hint or "built-in",
@@ -59,7 +69,9 @@ def render() -> None:
     )
     st.dataframe(table, width="stretch", hide_index=True)
 
-    with st.expander("How to install an optional engine" if lang == "en" else "كيفية تثبيت محرك اختياري"):
+    with st.expander(
+        "How to install an optional engine" if lang == "en" else "كيفية تثبيت محرك اختياري"
+    ):
         st.markdown(
             "Run these in the project environment, then restart the app:"
             if lang == "en"
@@ -76,6 +88,40 @@ def render() -> None:
             "The app never runs installation commands for you — you stay in control of your environment."
             if lang == "en"
             else "التطبيق لا ينفذ أوامر التثبيت نيابة عنك — أنت من يتحكم في بيئتك."
+        )
+
+    st.divider()
+    st.markdown(f"### {'External providers' if lang == 'en' else 'المزودون الخارجيون'}")
+    st.caption(
+        "Remote browsers, managed fetch services, source discovery, semantic content APIs and "
+        "model providers. All optional; none is used unless you configure it and allow it."
+        if lang == "en"
+        else "متصفحات بعيدة، خدمات جلب مُدارة، اكتشاف مصادر، واجهات محتوى دلالية، ومزودو نماذج. "
+        "كلها اختيارية ولا تُستخدم إلا إذا ضبطتها وسمحت بها."
+    )
+    provider_summary = provider_registry.summary()
+    pills(
+        [
+            (f"{provider_summary.get('ready', 0)} ready", "ok", "✓"),
+            (f"{provider_summary.get('not_configured', 0)} not configured", "warn", "◍"),
+            (f"{provider_summary.get('optional', 0)} not installed", "warn", "○"),
+        ]
+    )
+    st.dataframe(pd.DataFrame(provider_registry.provider_rows()), width="stretch", hide_index=True)
+
+    with st.expander(
+        "AI providers in detail" if lang == "en" else "مزودو الذكاء الاصطناعي بالتفصيل"
+    ):
+        st.dataframe(pd.DataFrame(ai_service.provider_table()), width="stretch", hide_index=True)
+        active = ai_service.get_provider()
+        st.caption(
+            f"Active provider: {active.label}"
+            if active
+            else (
+                "No model provider is configured — every AI feature stays switched off."
+                if lang == "en"
+                else "لا يوجد مزود نماذج مضبوط — تبقى كل ميزات الذكاء الاصطناعي معطلة."
+            )
         )
 
     st.divider()
@@ -101,19 +147,30 @@ def render() -> None:
     st.dataframe(
         pd.DataFrame(
             [
-                {"setting": "Max HTML response", "value": f"{limits.max_html_bytes / 1_048_576:.0f} MB"},
-                {"setting": "Max JSON sample", "value": f"{limits.max_json_sample_bytes / 1_048_576:.0f} MB"},
+                {
+                    "setting": "Max HTML response",
+                    "value": f"{limits.max_html_bytes / 1_048_576:.0f} MB",
+                },
+                {
+                    "setting": "Max JSON sample",
+                    "value": f"{limits.max_json_sample_bytes / 1_048_576:.0f} MB",
+                },
                 {"setting": "Max preview rows", "value": f"{limits.max_preview_rows:,}"},
                 {"setting": "Default crawl pages", "value": limits.default_max_pages},
                 {"setting": "Hard page cap", "value": limits.hard_max_pages},
                 {"setting": "Max redirects", "value": limits.max_redirects},
                 {"setting": "HTTP timeout", "value": f"{limits.http_timeout:.0f}s"},
                 {"setting": "Browser timeout", "value": f"{limits.browser_timeout:.0f}s"},
-                {"setting": "Requests per second", "value": SETTINGS.politeness.requests_per_second},
+                {
+                    "setting": "Requests per second",
+                    "value": SETTINGS.politeness.requests_per_second,
+                },
                 {"setting": "User agent", "value": SETTINGS.user_agent},
                 {
                     "setting": "Private networks allowed",
-                    "value": "yes (demo mode)" if SETTINGS.security.allow_private_networks else "no",
+                    "value": "yes (demo mode)"
+                    if SETTINGS.security.allow_private_networks
+                    else "no",
                 },
             ]
         ),

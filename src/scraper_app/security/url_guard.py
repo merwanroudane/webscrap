@@ -50,9 +50,7 @@ def normalize_url(raw: str) -> str:
     if not parts.netloc:
         raise UrlBlocked(ErrorCode.URL_INVALID, candidate)
     # Lowercase scheme/host, keep path and query untouched.
-    return urlunsplit(
-        (parts.scheme.lower(), parts.netloc.lower(), parts.path, parts.query, "")
-    )
+    return urlunsplit((parts.scheme.lower(), parts.netloc.lower(), parts.path, parts.query, ""))
 
 
 def _is_public_ip(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
@@ -72,9 +70,7 @@ def _resolve(host: str) -> list[str]:
     try:
         infos = socket.getaddrinfo(host, None, proto=socket.IPPROTO_TCP)
     except socket.gaierror as exc:  # pragma: no cover - network dependent
-        raise UrlBlocked(
-            ErrorCode.CONNECTION_ERROR, f"Could not resolve host {host}."
-        ) from exc
+        raise UrlBlocked(ErrorCode.CONNECTION_ERROR, f"Could not resolve host {host}.") from exc
     return sorted({info[4][0] for info in infos})
 
 

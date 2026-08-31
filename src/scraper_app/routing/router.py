@@ -28,15 +28,40 @@ from .scoring import rank_engines
 #: Ordered fallbacks per candidate kind. Only engines that are available run.
 FALLBACKS: dict[DatasetKind, list[str]] = {
     DatasetKind.FILE: ["direct_file"],
-    DatasetKind.API: ["json_api", "playwright"],
-    DatasetKind.TABLE: ["table", "playwright", "crawl4ai", "firecrawl"],
-    DatasetKind.REPEATED: ["repeated_dom", "playwright", "crawl4ai", "firecrawl"],
-    DatasetKind.STRUCTURED: ["structured", "playwright"],
-    DatasetKind.ARTICLE: ["article", "playwright"],
+    DatasetKind.API: ["json_api", "playwright", "managed_fetch"],
+    DatasetKind.TABLE: [
+        "table",
+        "playwright",
+        "scrapling",
+        "crawl4ai",
+        "managed_fetch",
+        "firecrawl",
+        "scrapegraph",
+        "agentql",
+    ],
+    DatasetKind.REPEATED: [
+        "repeated_dom",
+        "playwright",
+        "scrapling",
+        "crawl4ai",
+        "managed_fetch",
+        "firecrawl",
+        "scrapegraph",
+        "agentql",
+    ],
+    DatasetKind.STRUCTURED: ["structured", "playwright", "scrapling"],
+    DatasetKind.ARTICLE: ["article", "playwright", "semantic_content", "crawl4ai"],
     DatasetKind.FEED: ["feed"],
     DatasetKind.LINKS: ["links", "playwright"],
     DatasetKind.DOCUMENT: ["document"],
 }
+
+#: Engines that may only run when the researcher explicitly enabled agentic mode.
+AGENTIC_ENGINES = {"stagehand", "browser_use", "skyvern"}
+
+#: Multi-page crawls can be handed to a framework when one is installed.
+CRAWLER_ENGINES = ("scrapy", "crawlee")
+
 
 _RATIONALE = {
     "direct_file": (
@@ -86,6 +111,60 @@ _RATIONALE = {
     "crawl4ai": (
         "Deterministic extraction did not succeed, so a local adaptive engine renders and parses the page.",
         "لم ينجح الاستخراج الحتمي، لذلك يقوم محرك محلي تكيفي بعرض الصفحة وتحليلها.",
+    ),
+    "scrapling": (
+        "Deterministic selectors did not match, so an adaptive local engine relocated the "
+        "equivalent elements. Nothing left this machine.",
+        "لم تتطابق المحددات الحتمية، لذلك أعاد محرك محلي تكيفي تحديد العناصر المكافئة. لم يغادر شيء هذا الجهاز.",
+    ),
+    "scrapy": (
+        "Several pages are needed, so a crawler framework fetched them with a proper request "
+        "queue and rate limiting.",
+        "المطلوب عدة صفحات، لذلك جلبها إطار زحف باستخدام طابور طلبات وتحديد معدل مناسب.",
+    ),
+    "crawlee": (
+        "Several pages are needed, so a crawler framework fetched them with a proper request "
+        "queue and rate limiting.",
+        "المطلوب عدة صفحات، لذلك جلبها إطار زحف باستخدام طابور طلبات وتحديد معدل مناسب.",
+    ),
+    "selenium": (
+        "A browser was required and Selenium is the configured compatibility path.",
+        "كان المتصفح مطلوبًا، وSelenium هو مسار التوافق المهيأ.",
+    ),
+    "scrapegraph": (
+        "Local methods could not read this source, so a hosted AI extraction service was used. "
+        "Page content left this machine for that provider.",
+        "لم تستطع الطرق المحلية قراءة هذا المصدر، لذلك استُخدمت خدمة استخراج مستضافة بالذكاء الاصطناعي. غادر محتوى الصفحة هذا الجهاز.",
+    ),
+    "agentql": (
+        "The requested fields were described semantically because the page has no stable "
+        "selectors. The query and URL were sent to AgentQL.",
+        "تم وصف الحقول المطلوبة دلاليًا لأن الصفحة لا تملك محددات ثابتة. أُرسل الاستعلام والرابط إلى AgentQL.",
+    ),
+    "managed_fetch": (
+        "A managed fetch provider retrieved the page, then the same deterministic parsers read "
+        "it. Only the fetch was outsourced.",
+        "قام مزود جلب مُدار بإحضار الصفحة، ثم قرأتها نفس المحللات الحتمية. الجلب فقط هو ما تم إسناده خارجيًا.",
+    ),
+    "semantic_content": (
+        "This page is prose rather than a table, so a content service returned clean article "
+        "text and metadata.",
+        "هذه الصفحة نص وليست جدولًا، لذلك أعادت خدمة محتوى نصًا نظيفًا مع بيانات وصفية.",
+    ),
+    "stagehand": (
+        "This source needs multi-step interaction, so an agentic browser performed the steps. "
+        "It never signs in or bypasses access controls.",
+        "يحتاج هذا المصدر تفاعلًا متعدد الخطوات، لذلك نفذ متصفح وكيل الخطوات. لا يسجل الدخول ولا يتجاوز ضوابط الوصول.",
+    ),
+    "browser_use": (
+        "This source needs multi-step interaction, so an agentic browser performed the steps. "
+        "It never signs in or bypasses access controls.",
+        "يحتاج هذا المصدر تفاعلًا متعدد الخطوات، لذلك نفذ متصفح وكيل الخطوات. لا يسجل الدخول ولا يتجاوز ضوابط الوصول.",
+    ),
+    "skyvern": (
+        "This source needs multi-step interaction, so a hosted agent performed the steps. "
+        "It never signs in or bypasses access controls.",
+        "يحتاج هذا المصدر تفاعلًا متعدد الخطوات، لذلك نفذ وكيل مستضاف الخطوات. لا يسجل الدخول ولا يتجاوز ضوابط الوصول.",
     ),
     "firecrawl": (
         "A hosted extraction provider was selected because local methods could not read this source. "
@@ -202,8 +281,24 @@ def execute(
     engine, decision = choose_engine(request, candidate, profile)
 
     chain: list[str] = [engine.name]
+
+    # A genuine multi-page job is better served by a crawler framework than by
+    # repeated single fetches, when one is installed.
+    wants_many_pages = (limit_pages or request.max_pages or 1) > 1 or request.crawl.enabled
+    if wants_many_pages:
+        for name in CRAWLER_ENGINES:
+            crawler = engines.get(name)
+            if crawler is not None and crawler.available() and name not in chain:
+                chain.append(name)
+
     if candidate is not None:
         for name in FALLBACKS.get(candidate.kind, []):
+            if name not in chain:
+                chain.append(name)
+
+    # Agentic engines are the documented last resort and only on request.
+    if request.allow_agentic:
+        for name in ("stagehand", "browser_use", "skyvern"):
             if name not in chain:
                 chain.append(name)
 
@@ -214,11 +309,20 @@ def execute(
             continue
         if current.cost_mode == "metered" and not request.allow_cloud:
             continue
-        if name == "playwright" and not request.allow_browser:
+        if name in {"playwright", "selenium"} and not request.allow_browser:
             continue
+        if name in AGENTIC_ENGINES and not request.allow_agentic:
+            continue
+        # A non-deterministic engine that would call a model needs AI enabled.
+        if not current.deterministic and name in {"crawl4ai"} and not request.allow_ai:
+            # Crawl4AI still runs in deterministic DOM mode; semantic mode is
+            # gated inside the engine itself, so this is not a hard skip.
+            pass
         try:
             if logger:
-                logger.log("router", "engine_selected", engine=name, url=request.url, attempt=index + 1)
+                logger.log(
+                    "router", "engine_selected", engine=name, url=request.url, attempt=index + 1
+                )
             result = current.extract(
                 request,
                 candidate,
@@ -243,7 +347,9 @@ def execute(
         except ScraperError as exc:
             errors.append(f"{name}: {exc.code.value}")
             if logger:
-                logger.warn("router", "engine_failed", engine=name, url=request.url, code=exc.code.value)
+                logger.warn(
+                    "router", "engine_failed", engine=name, url=request.url, code=exc.code.value
+                )
             if exc.code in {
                 ErrorCode.ROBOTS_RESTRICTED,
                 ErrorCode.URL_PRIVATE_NETWORK_BLOCKED,
@@ -257,7 +363,9 @@ def execute(
         except Exception as exc:  # unexpected engine failure -> taxonomy, no traceback in UI
             errors.append(f"{name}: {exc.__class__.__name__}")
             if logger:
-                logger.error("router", "engine_exception", engine=name, error=exc.__class__.__name__)
+                logger.error(
+                    "router", "engine_exception", engine=name, error=exc.__class__.__name__
+                )
             if index == len(chain) - 1:
                 raise ScraperError(
                     ErrorCode.INTERNAL, f"{name} failed ({exc.__class__.__name__})."

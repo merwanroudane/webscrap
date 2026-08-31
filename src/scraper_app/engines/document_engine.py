@@ -1,9 +1,8 @@
-"""Document extraction (spec sections 4N / 100).
+"""Document extraction engine (audit section Q).
 
-When a URL resolves to a PDF the app routes it here instead of forcing HTML
-scraping. PyMuPDF is used when installed (text + tables per page); Docling is
-recognised as the heavier optional path. Without either, the engine reports an
-honest limitation rather than returning an empty dataset.
+Delegates to a :class:`~scraper_app.providers.documents.DocumentExtractor`:
+PyMuPDF for ordinary PDFs, Docling when installed and preferred for complex
+layouts. Both are local, so a document never leaves the machine.
 """
 
 from __future__ import annotations
@@ -15,17 +14,9 @@ from ..config import SETTINGS
 from ..exceptions import ErrorCode, ScraperError
 from ..logging_config import RunLogger
 from ..models import CandidateDataset, ExtractionRequest, ExtractionResult, ExtractionSchema
+from ..providers import documents as document_providers
 from .base import Availability, BaseEngine
 from .http_client import fetch
-
-
-def _pymupdf_available() -> bool:
-    try:
-        import fitz  # noqa: F401  (PyMuPDF)
-
-        return True
-    except Exception:
-        return False
 
 
 class DocumentEngine(BaseEngine):
@@ -38,12 +29,13 @@ class DocumentEngine(BaseEngine):
     speed = 0.6
 
     def availability(self) -> Availability:
-        if _pymupdf_available():
+        extractor = document_providers.best_extractor()
+        if extractor is not None:
             return Availability(True)
         return Availability(
             False,
-            "PDF extraction needs the optional PyMuPDF package.",
-            "pip install pymupdf",
+            "PDF extraction needs an optional document parser.",
+            "pip install pymupdf   (or: pip install docling)",
         )
 
     def extract(
@@ -57,8 +49,9 @@ class DocumentEngine(BaseEngine):
         limit_pages: int | None = None,
     ) -> ExtractionResult:
         started = time.monotonic()
-        status = self.availability()
-        if not status.ready:
+        extractor = document_providers.best_extractor(request.engine_preference)
+        if extractor is None:
+            status = self.availability()
             raise ScraperError(
                 ErrorCode.OPTIONAL_ENGINE_NOT_INSTALLED,
                 status.reason,
@@ -69,58 +62,51 @@ class DocumentEngine(BaseEngine):
         url = str(payload.get("url") or request.url)
         response = fetch(url, max_bytes=SETTINGS.limits.max_download_bytes)
 
-        import fitz  # type: ignore
+        if progress:
+            progress(1, 1, url)
 
-        records: list[dict[str, Any]] = []
-        tables_found = 0
-        with fitz.open(stream=response.content, filetype="pdf") as document:
-            page_limit = min(limit_pages or request.max_pages or document.page_count, document.page_count)
-            for index in range(page_limit):
-                if progress:
-                    progress(index + 1, page_limit, url)
-                page = document.load_page(index)
-                text = page.get_text("text") or ""
-                page_tables: list[list[list[str]]] = []
-                try:
-                    finder = page.find_tables()
-                    page_tables = [table.extract() for table in finder.tables]
-                except Exception:
-                    page_tables = []
-                tables_found += len(page_tables)
-
-                if page_tables:
-                    for table_index, table in enumerate(page_tables):
-                        if len(table) < 2:
-                            continue
-                        header = [str(cell or f"column_{i}") for i, cell in enumerate(table[0])]
-                        for row in table[1:]:
-                            record = {
-                                header[i] if i < len(header) else f"column_{i}": (cell or "")
-                                for i, cell in enumerate(row)
-                            }
-                            record["_page"] = index + 1
-                            record["_table"] = table_index + 1
-                            records.append(record)
-                else:
-                    records.append({"page": index + 1, "text": text.strip()})
-
+        result = extractor.extract(
+            response.content,
+            url=response.url,
+            max_pages=limit_pages or request.max_pages or None,
+        )
+        records: list[dict[str, Any]] = result.to_records()
         if not records:
-            raise ScraperError(ErrorCode.NO_DATA_DETECTED, "The document contained no readable text.")
+            raise ScraperError(
+                ErrorCode.NO_DATA_DETECTED, "The document contained no readable text or tables."
+            )
 
         if request.add_provenance_columns:
             for record in records:
                 record.setdefault("_source_url", response.url)
 
+        max_rows = request.max_rows or SETTINGS.limits.max_rows
+        truncated = len(records) > max_rows
+        records = records[:max_rows]
+
         if logger:
-            logger.log("document", "pdf_extracted", url=response.url, engine=self.name, rows=len(records))
+            logger.log(
+                "document",
+                "document_extracted",
+                url=response.url,
+                engine=self.name,
+                extractor=extractor.id,
+                rows=len(records),
+            )
 
         return self._result(
             success=True,
-            records=records[: request.max_rows or SETTINGS.limits.max_rows],
+            records=records,
             columns=list(dict.fromkeys(key for record in records for key in record)),
             source_urls=[response.url],
             started=started,
             pages_requested=1,
             pages_successful=1,
-            metadata={"tables_found": tables_found, "parser": "pymupdf"},
+            truncated=truncated,
+            metadata={
+                "extractor": extractor.id,
+                "pages": len(result.pages),
+                "tables_found": result.table_count,
+                "document_metadata": {k: str(v)[:200] for k, v in (result.metadata or {}).items()},
+            },
         )

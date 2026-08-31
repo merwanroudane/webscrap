@@ -22,6 +22,7 @@ from scraper_app.config import APP_AUTHOR, APP_NAME, APP_VERSION, ensure_dirs  #
 from scraper_app.ui import (  # noqa: E402
     dataset_builder,
     extraction_run,
+    find_sources,
     help_page,
     history,
     home,
@@ -78,9 +79,10 @@ def _sidebar() -> str:
 
         page = st.radio(
             "Pages" if lang == "en" else "الصفحات",
-            options=["workflow", "history", "engines", "help"],
+            options=["workflow", "find_sources", "history", "engines", "help"],
             format_func=lambda key: {
                 "workflow": t("workflow", lang),
+                "find_sources": t("find_sources", lang),
                 "history": t("history", lang),
                 "engines": t("engines", lang),
                 "help": t("help", lang),
@@ -92,7 +94,10 @@ def _sidebar() -> str:
         if st.button(t("new_extraction", lang), width="stretch"):
             state.reset_run(keep_url=False)
             st.rerun()
-        if st.session_state.get("outcome") is not None or st.session_state.get("analysis") is not None:
+        if (
+            st.session_state.get("outcome") is not None
+            or st.session_state.get("analysis") is not None
+        ):
             if st.button(t("clear_session", lang), width="stretch"):
                 if st.session_state.get("outcome") is not None:
                     st.warning(
@@ -134,7 +139,10 @@ def _workflow_navigation(lang: str) -> None:
     labels = dict(available)
     # Keep the control in sync when the step advanced programmatically: a keyed
     # widget would otherwise keep returning its own stale selection.
-    if st.session_state.get("workflow_nav") not in keys or st.session_state.get("workflow_nav") != current:
+    if (
+        st.session_state.get("workflow_nav") not in keys
+        or st.session_state.get("workflow_nav") != current
+    ):
         st.session_state["workflow_nav"] = current
     chosen = st.segmented_control(
         t("workflow", lang),
@@ -152,6 +160,9 @@ def main() -> None:
     page = _sidebar()
     lang = state.lang()
 
+    if page == "find_sources":
+        find_sources.render()
+        return
     if page == "history":
         history.render()
         return

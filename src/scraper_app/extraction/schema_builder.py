@@ -74,7 +74,8 @@ TERM_MAP: dict[str, tuple[str, str]] = {
 _SPLIT = re.compile(r"[,،;؛\n]| and | و |&")
 _LEAD = re.compile(
     r"(?i)^(please\s+)?(extract|get|collect|scrape|i\s+want|i\s+need|give\s+me|"
-    r"استخرج|أريد|اريد|اجمع|أعطني|اعطني)\s*", re.UNICODE
+    r"استخرج|أريد|اريد|اجمع|أعطني|اعطني)\s*",
+    re.UNICODE,
 )
 _NOISE = re.compile(r"(?i)\b(the|a|an|for|each|every|all|of|from|per|كل|لكل|من)\b")
 

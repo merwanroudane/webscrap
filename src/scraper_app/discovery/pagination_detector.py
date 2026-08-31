@@ -18,7 +18,9 @@ from ..models import Confidence, PaginationPlan, PaginationType
 _PAGE_PARAMS = ("page", "p", "pagenum", "page_number", "pageindex", "pg", "start_page")
 _OFFSET_PARAMS = ("offset", "start", "from", "skip")
 _NEXT_TEXT = re.compile(r"(?i)^\s*(next|next page|older|more|›|»|→|التالي|التالية|المزيد)\s*$")
-_LOAD_MORE_TEXT = re.compile(r"(?i)(load more|show more|view more|see more|عرض المزيد|تحميل المزيد)")
+_LOAD_MORE_TEXT = re.compile(
+    r"(?i)(load more|show more|view more|see more|عرض المزيد|تحميل المزيد)"
+)
 _INFINITE_HINT = re.compile(
     r"(?i)(infinite[-_ ]?scroll|data-infinite|IntersectionObserver|scroll-?loader|lazy-?load-?more)"
 )

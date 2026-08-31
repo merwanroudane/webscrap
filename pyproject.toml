@@ -3,7 +3,7 @@ name = "smart-research-web-scraper"
 version = "0.1.0"
 description = "Research-oriented Streamlit application that turns web pages into analysis-ready datasets."
 readme = "README.md"
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.12,<3.14"
 authors = [{ name = "Merwan Roudane", email = "merwanroudane920@gmail.com" }]
 maintainers = [{ name = "Merwan Roudane", email = "merwanroudane920@gmail.com" }]
 license = { file = "LICENSE" }
@@ -14,7 +14,6 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
@@ -54,13 +53,23 @@ Documentation = "https://github.com/merwanroudane/webscrap/blob/main/docs/USER_G
 Issues = "https://github.com/merwanroudane/webscrap/issues"
 
 [project.optional-dependencies]
+# Local browser rendering and network API discovery.
 browser = ["playwright", "selenium"]
+# Bounded multi-page crawling frameworks.
 crawler = ["scrapy", "crawlee"]
-modern = ["crawl4ai", "scrapling[fetchers]"]
-cloud = ["firecrawl-py", "scrapegraph-py>=2.1.0", "agentql", "zyte-api", "apify"]
+# Local adaptive/semantic engines.
+modern = ["crawl4ai", "scrapling"]
+# Provider-independent AI layer. Pick one backend, or litellm for many.
+ai = ["anthropic", "openai", "google-genai", "litellm", "instructor"]
+# Hosted extraction services (each also needs its own API key).
+cloud = ["firecrawl-py", "scrapegraph-py>=2.1.0", "agentql"]
+# Agentic browser workflows — last resort, never for ordinary scraping.
 agents = ["stagehand", "browser-use", "skyvern"]
-documents = ["docling", "pymupdf"]
-# pyreadr is AGPL-3.0: opt-in only, see THIRD_PARTY_LICENSES.md
+# Document parsing. Both are AGPL-3.0: see THIRD_PARTY_LICENSES.md.
+documents = ["pymupdf", "docling"]
+# Quality-of-life helpers used only where they measurably improve results.
+helpers = ["rapidfuzz", "dateparser", "ftfy", "tldextract", "ultimate-sitemap-parser"]
+# Research exports. pyreadr is AGPL-3.0 and therefore opt-in.
 research = ["kaleido", "pytablewriter", "pyreadr"]
 dev = [
   "pytest",
@@ -72,6 +81,18 @@ dev = [
   "mypy",
   "bandit",
   "pip-audit",
+]
+# Everything that is free, local and permissively licensed.
+all-local = [
+  "playwright",
+  "scrapy",
+  "crawlee",
+  "crawl4ai",
+  "scrapling",
+  "rapidfuzz",
+  "dateparser",
+  "ftfy",
+  "tldextract",
 ]
 
 [build-system]
@@ -88,7 +109,7 @@ filterwarnings = ["ignore::DeprecationWarning"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py312"
 src = ["src", "tests"]
 # runs/ holds generated reproducer scripts and datasets, not project source.
 extend-exclude = ["runs", ".pytest_runs", ".venv"]
@@ -100,7 +121,7 @@ select = ["E", "F", "I", "UP", "B", "C4"]
 ignore = ["B008", "E501", "C408", "UP042"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 ignore_missing_imports = true
 follow_imports = "silent"
 

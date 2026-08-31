@@ -80,7 +80,18 @@ def detect_format(url: str, content_type: str | None = None) -> str | None:
 
 
 def is_tabular_format(fmt: str | None) -> bool:
-    return fmt in {"csv", "tsv", "json", "jsonl", "excel", "parquet", "feather", "stata", "spss", "rds"}
+    return fmt in {
+        "csv",
+        "tsv",
+        "json",
+        "jsonl",
+        "excel",
+        "parquet",
+        "feather",
+        "stata",
+        "spss",
+        "rds",
+    }
 
 
 def is_document_format(fmt: str | None) -> bool:

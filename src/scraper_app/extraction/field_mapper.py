@@ -18,6 +18,23 @@ from ..models import Confidence, ExtractionSchema
 
 _NON_WORD = re.compile(r"[^0-9a-z؀-ۿ]+")
 
+
+def _fuzzy_best(target: str, candidates: list[str]) -> tuple[str | None, float]:
+    """Best fuzzy match. Uses rapidfuzz when installed, difflib otherwise."""
+    if not candidates:
+        return None, 0.0
+    try:
+        from rapidfuzz import process as rf_process
+
+        match = rf_process.extractOne(target, candidates, score_cutoff=82)
+        return (match[0], match[1] / 100.0) if match else (None, 0.0)
+    except Exception:
+        close = difflib.get_close_matches(target, candidates, n=1, cutoff=0.82)
+        if not close:
+            return None, 0.0
+        ratio = difflib.SequenceMatcher(None, target, close[0]).ratio()
+        return close[0], ratio
+
 #: Reverse index: canonical name -> every phrase that maps to it.
 _SYNONYMS: dict[str, set[str]] = {}
 for _phrase, (_canonical, _dtype) in TERM_MAP.items():
@@ -45,12 +62,12 @@ class MappingReport:
 
     @property
     def needs_review(self) -> bool:
-        return bool(self.unmatched) or any(
-            m.confidence is Confidence.LOW for m in self.mappings
-        )
+        return bool(self.unmatched) or any(m.confidence is Confidence.LOW for m in self.mappings)
 
 
-def map_schema(schema: ExtractionSchema, columns: list[str], frame: pd.DataFrame | None = None) -> MappingReport:
+def map_schema(
+    schema: ExtractionSchema, columns: list[str], frame: pd.DataFrame | None = None
+) -> MappingReport:
     """Match requested field names against available columns."""
     report = MappingReport()
     if not schema.fields:
@@ -82,9 +99,9 @@ def map_schema(schema: ExtractionSchema, columns: list[str], frame: pd.DataFrame
                     break
 
         if matched is None:
-            close = difflib.get_close_matches(target, list(normalized), n=1, cutoff=0.82)
-            if close:
-                matched, method, confidence = normalized[close[0]], "fuzzy", Confidence.LOW
+            best, _score = _fuzzy_best(target, list(normalized))
+            if best:
+                matched, method, confidence = normalized[best], "fuzzy", Confidence.LOW
 
         sample: str | None = None
         if matched and frame is not None and matched in frame.columns:
@@ -103,7 +120,9 @@ def map_schema(schema: ExtractionSchema, columns: list[str], frame: pd.DataFrame
     return report
 
 
-def apply_mapping(frame: pd.DataFrame, report: MappingReport, keep_extra: bool = True) -> pd.DataFrame:
+def apply_mapping(
+    frame: pd.DataFrame, report: MappingReport, keep_extra: bool = True
+) -> pd.DataFrame:
     """Rename matched columns to the requested names, keeping provenance columns."""
     rename = {
         mapping.matched_column: mapping.requested
@@ -115,9 +134,11 @@ def apply_mapping(frame: pd.DataFrame, report: MappingReport, keep_extra: bool =
     requested = [m.requested for m in report.mappings if m.matched_column]
     provenance = [c for c in result.columns if str(c).startswith("_")]
     if keep_extra:
-        ordered = requested + [
-            c for c in result.columns if c not in requested and c not in provenance
-        ] + provenance
+        ordered = (
+            requested
+            + [c for c in result.columns if c not in requested and c not in provenance]
+            + provenance
+        )
     else:
         ordered = requested + provenance
     return result[[c for c in ordered if c in result.columns]]

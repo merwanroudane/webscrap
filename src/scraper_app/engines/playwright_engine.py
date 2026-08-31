@@ -27,6 +27,7 @@ from ..models import (
     FieldSpec,
     PaginationType,
 )
+from ..providers import remote_browser
 from ..security.url_guard import guard_url
 from .base import BaseEngine
 
@@ -34,7 +35,14 @@ from .base import BaseEngine
 class PlaywrightEngine(BaseEngine):
     name = "playwright"
     label = "Browser rendering"
-    capabilities = {"javascript", "static_html", "html_tables", "network_capture", "pagination", "local"}
+    capabilities = {
+        "javascript",
+        "static_html",
+        "html_tables",
+        "network_capture",
+        "pagination",
+        "local",
+    }
     tier = 3
     cost_mode = "local_compute"
     reliability = 0.8
@@ -46,6 +54,13 @@ class PlaywrightEngine(BaseEngine):
 
         ok, reason = playwright_available()
         if ok:
+            return Availability(True)
+        # A configured remote browser still needs the playwright client library,
+        # but not a local Chromium download.
+        if (
+            remote_browser.configured_provider() is not None
+            and "Chromium is not installed" in reason
+        ):
             return Availability(True)
         return Availability(
             False,
@@ -97,13 +112,16 @@ class PlaywrightEngine(BaseEngine):
             max_pages=max_pages,
             progress=progress,
             logger=logger,
+            remote_preference=request.engine_preference,
         )
 
         records: list[dict[str, Any]] = []
         columns: list[str] = []
         selector = request.selector or payload.get("selector")
         table_index = payload.get("table_index")
-        fields = [FieldSpec(**f) for f in payload.get("fields", [])] if payload.get("fields") else []
+        fields = (
+            [FieldSpec(**f) for f in payload.get("fields", [])] if payload.get("fields") else []
+        )
 
         for page_number, (url, html) in enumerate(pages_html, start=1):
             page_records: list[dict[str, Any]] = []
@@ -114,7 +132,9 @@ class PlaywrightEngine(BaseEngine):
                     page_records = frame.to_dict(orient="records")
                     columns = columns or [str(c) for c in frame.columns]
             elif selector:
-                page_records = repeated_patterns.extract_rows_with_selector(html, selector, fields, url)
+                page_records = repeated_patterns.extract_rows_with_selector(
+                    html, selector, fields, url
+                )
             else:
                 detected = repeated_patterns.detect_repeated_patterns(html, url)
                 if detected:
@@ -169,15 +189,16 @@ class PlaywrightEngine(BaseEngine):
         max_pages: int,
         progress=None,
         logger: RunLogger | None = None,
+        remote_preference: str | None = None,
     ) -> list[tuple[str, str]]:
-        from playwright.sync_api import sync_playwright
-
         timeout_ms = int(SETTINGS.limits.browser_timeout * 1000)
         pages: list[tuple[str, str]] = []
+        provider = remote_browser.configured_provider(remote_preference)
 
         try:  # pragma: no cover - requires a real browser
-            with sync_playwright() as p:
-                browser = p.chromium.launch(headless=True)
+            with remote_browser.browser_context(provider) as (browser, where):
+                if logger:
+                    logger.log("playwright", "browser_ready", engine=self.name, browser=where)
                 context = browser.new_context(user_agent=SETTINGS.user_agent)
                 page = context.new_page()
                 page.goto(url, timeout=timeout_ms, wait_until="domcontentloaded")
@@ -200,7 +221,10 @@ class PlaywrightEngine(BaseEngine):
                 elif plan_type == PaginationType.LOAD_MORE and next_selector:
                     self._load_more(page, next_selector, max_pages, logger)
                     pages.append((page.url, page.content()))
-                elif plan_type in {PaginationType.NEXT_BUTTON, PaginationType.NEXT_LINK} and max_pages > 1:
+                elif (
+                    plan_type in {PaginationType.NEXT_BUTTON, PaginationType.NEXT_LINK}
+                    and max_pages > 1
+                ):
                     for index in range(max_pages):
                         if progress:
                             progress(index + 1, max_pages, page.url)
@@ -219,7 +243,6 @@ class PlaywrightEngine(BaseEngine):
                     pages.append((page.url, page.content()))
 
                 context.close()
-                browser.close()
         except ScraperError:
             raise
         except Exception as exc:
@@ -247,7 +270,9 @@ class PlaywrightEngine(BaseEngine):
                 stable = 0
             previous_height = height
 
-    def _load_more(self, page, selector: str, max_clicks: int, logger: RunLogger | None) -> None:  # pragma: no cover
+    def _load_more(
+        self, page, selector: str, max_clicks: int, logger: RunLogger | None
+    ) -> None:  # pragma: no cover
         for _ in range(min(max_clicks, SETTINGS.limits.max_scrolls)):
             try:
                 locator = page.locator(selector).first

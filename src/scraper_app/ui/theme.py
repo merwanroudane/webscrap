@@ -104,7 +104,7 @@ def card(title: str, body: str = "", badges: list[tuple[str, str, str]] | None =
     badge_html = " ".join(pill(t, k, s) for t, k, s in (badges or []))
     st.markdown(
         f'<div class="srws-card"><h4>{html.escape(title)}</h4>'
-        f'{badge_html}<p>{html.escape(body)}</p></div>',
+        f"{badge_html}<p>{html.escape(body)}</p></div>",
         unsafe_allow_html=True,
     )
 
@@ -134,6 +134,8 @@ def robots_badge(state: str, lang: str = "en") -> tuple[str, str, str]:
         "unknown": {"en": "robots.txt: unknown", "ar": "robots.txt: غير معروف"},
         "not_checked": {"en": "robots.txt: not checked", "ar": "robots.txt: لم يُفحص"},
     }[state][lang if lang in {"en", "ar"} else "en"]
-    kind = {"allowed": "ok", "restricted": "warn", "unknown": "neutral", "not_checked": "neutral"}[state]
+    kind = {"allowed": "ok", "restricted": "warn", "unknown": "neutral", "not_checked": "neutral"}[
+        state
+    ]
     symbol = {"allowed": "✓", "restricted": "⚠", "unknown": "?", "not_checked": "–"}[state]
     return text, kind, symbol

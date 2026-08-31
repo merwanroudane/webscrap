@@ -59,7 +59,9 @@ def resolve_path(payload: Any, path: str | None) -> Any:
     return node
 
 
-def records_from_payload(payload: Any, records_path: str | None) -> tuple[list[dict[str, Any]], str | None]:
+def records_from_payload(
+    payload: Any, records_path: str | None
+) -> tuple[list[dict[str, Any]], str | None]:
     """Return ``(records, path_used)`` for a JSON document."""
     if records_path:
         node = resolve_path(payload, records_path)
@@ -244,8 +246,15 @@ class JsonApiEngine(BaseEngine):
                 if plan.url_template and "{page}" in plan.url_template:
                     return plan.url_template.replace("{page}", str(page_number))
                 return url
-        if plan.type in {PaginationType.PAGE_NUMBER, PaginationType.OFFSET_LIMIT} and plan.url_template:
-            value = page_number if plan.type == PaginationType.PAGE_NUMBER else (page_number - plan.start) * plan.step
+        if (
+            plan.type in {PaginationType.PAGE_NUMBER, PaginationType.OFFSET_LIMIT}
+            and plan.url_template
+        ):
+            value = (
+                page_number
+                if plan.type == PaginationType.PAGE_NUMBER
+                else (page_number - plan.start) * plan.step
+            )
             return plan.url_template.replace("{page}", str(value))
         if plan.type == PaginationType.CURSOR and cursor:
             parts = urlsplit(url)

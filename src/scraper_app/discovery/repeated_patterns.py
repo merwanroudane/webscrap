@@ -20,7 +20,9 @@ from ..models import Confidence, FieldSpec, NameSource, RepeatedPatternCandidate
 
 _WS = re.compile(r"\s+")
 _SKIP_TAGS = {"script", "style", "noscript", "svg", "path", "template", "br", "hr"}
-_NOISE_CLASS = re.compile(r"(?i)(nav|menu|footer|header|breadcrumb|pagination|cookie|banner|social)")
+_NOISE_CLASS = re.compile(
+    r"(?i)(nav|menu|footer|header|breadcrumb|pagination|cookie|banner|social)"
+)
 
 
 def _text(node) -> str:
@@ -156,9 +158,7 @@ def detect_repeated_patterns(
         if not isinstance(parent.tag, str) or parent.tag in _SKIP_TAGS:
             continue
         children = [
-            child
-            for child in parent
-            if isinstance(child.tag, str) and child.tag not in _SKIP_TAGS
+            child for child in parent if isinstance(child.tag, str) and child.tag not in _SKIP_TAGS
         ]
         if len(children) < min_items:
             continue
@@ -192,7 +192,12 @@ def detect_repeated_patterns(
             1 for row in normalized for key in keep if row.get(key) not in (None, "")
         ) / float(len(normalized) * len(keep))
         text_only = keep == ["text"]
-        score = 0.35 + 0.25 * min(len(rows) / 20.0, 1.0) + 0.25 * filled + 0.1 * min(len(keep) / 5.0, 1.0)
+        score = (
+            0.35
+            + 0.25 * min(len(rows) / 20.0, 1.0)
+            + 0.25 * filled
+            + 0.1 * min(len(keep) / 5.0, 1.0)
+        )
         if text_only:
             score -= 0.25
         score = max(0.05, min(score, 0.95))
@@ -203,9 +208,7 @@ def detect_repeated_patterns(
                 dtype=_infer_dtype([row.get(key) for row in normalized]),
                 selector=None,
                 name_source=NameSource.HEURISTIC,
-                confidence=Confidence.from_score(
-                    key_counts[key] / len(normalized)
-                ),
+                confidence=Confidence.from_score(key_counts[key] / len(normalized)),
                 sample=next(
                     (str(row[key])[:80] for row in normalized if row.get(key) not in (None, "")),
                     None,

@@ -58,17 +58,23 @@ def _is_measure(name: str) -> bool:
 
 def _column_types(frame: pd.DataFrame) -> tuple[list[str], list[str], list[str]]:
     numeric = [
-        c for c in frame.columns
-        if pd.api.types.is_numeric_dtype(frame[c]) and not str(c).startswith("_")
+        c
+        for c in frame.columns
+        if pd.api.types.is_numeric_dtype(frame[c])
+        and not str(c).startswith("_")
         and not str(c).endswith("_outlier_flag")
     ]
     dates = [
-        c for c in frame.columns
+        c
+        for c in frame.columns
         if pd.api.types.is_datetime64_any_dtype(frame[c]) and not str(c).startswith("_")
     ]
     categorical = [
-        c for c in frame.columns
-        if c not in numeric and c not in dates and not str(c).startswith("_")
+        c
+        for c in frame.columns
+        if c not in numeric
+        and c not in dates
+        and not str(c).startswith("_")
         and frame[c].dropna().nunique() <= max(30, len(frame) // 10)
     ]
     # Real measures first: a "year" or "id" column is an axis, not a value.

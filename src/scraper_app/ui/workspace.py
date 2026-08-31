@@ -95,7 +95,8 @@ def _data_tab(outcome, frame: pd.DataFrame, lang: str) -> None:
     visible = controls[1].multiselect(
         "Visible columns" if lang == "en" else "الأعمدة الظاهرة",
         options=[str(c) for c in frame.columns],
-        default=[str(c) for c in frame.columns if not str(c).startswith("_")][:12] or [str(c) for c in frame.columns][:12],
+        default=[str(c) for c in frame.columns if not str(c).startswith("_")][:12]
+        or [str(c) for c in frame.columns][:12],
         key="data_columns",
     )
     hide_provenance = controls[2].toggle(
@@ -106,9 +107,11 @@ def _data_tab(outcome, frame: pd.DataFrame, lang: str) -> None:
 
     view = frame
     if search:
-        mask = view.astype(str).apply(
-            lambda column: column.str.contains(search, case=False, na=False)
-        ).any(axis=1)
+        mask = (
+            view.astype(str)
+            .apply(lambda column: column.str.contains(search, case=False, na=False))
+            .any(axis=1)
+        )
         view = view[mask]
     keep = [c for c in (visible or list(frame.columns)) if c in frame.columns]
     if hide_provenance:
@@ -171,9 +174,7 @@ def _quality_tab(outcome, lang: str) -> None:
     st.dataframe(pd.DataFrame(quality.column_stats), width="stretch", hide_index=True)
 
     if quality.conversion_failures:
-        st.markdown(
-            f"**{'Conversion failures' if lang == 'en' else 'حالات فشل التحويل'}**"
-        )
+        st.markdown(f"**{'Conversion failures' if lang == 'en' else 'حالات فشل التحويل'}**")
         st.dataframe(
             pd.DataFrame(
                 [{"column": k, "failed_values": v} for k, v in quality.conversion_failures.items()]
@@ -197,7 +198,11 @@ def _charts_tab(frame: pd.DataFrame, lang: str) -> None:
         st.markdown(f"**{'Recommended charts' if lang == 'en' else 'رسوم مقترحة'}**")
         labels = [s.title for s in suggestions]
         chosen = st.radio(
-            "Suggestion", labels, horizontal=True, label_visibility="collapsed", key="chart_suggestion"
+            "Suggestion",
+            labels,
+            horizontal=True,
+            label_visibility="collapsed",
+            key="chart_suggestion",
         )
         suggestion = suggestions[labels.index(chosen)]
         st.caption(suggestion.reason)
@@ -208,7 +213,9 @@ def _charts_tab(frame: pd.DataFrame, lang: str) -> None:
             width="stretch",
         )
 
-    with st.expander("Build your own chart" if lang == "en" else "أنشئ رسمك الخاص", expanded=not suggestions):
+    with st.expander(
+        "Build your own chart" if lang == "en" else "أنشئ رسمك الخاص", expanded=not suggestions
+    ):
         columns = st.columns(4)
         kind = columns[0].selectbox(
             "Chart type", ["bar", "line", "scatter", "histogram", "box", "heatmap", "frequency"]
@@ -217,7 +224,9 @@ def _charts_tab(frame: pd.DataFrame, lang: str) -> None:
         x = columns[1].selectbox("X", options, index=1 if len(options) > 1 else 0)
         y = columns[2].selectbox("Y", options, index=2 if len(options) > 2 else 0)
         color = columns[3].selectbox("Colour / group", options, index=0)
-        aggregation = st.selectbox("Aggregation", ["none", "sum", "mean", "count", "median"], index=0)
+        aggregation = st.selectbox(
+            "Aggregation", ["none", "sum", "mean", "count", "median"], index=0
+        )
         st.plotly_chart(
             charts.build_chart(
                 frame,
@@ -250,15 +259,16 @@ def _sources_tab(outcome, lang: str) -> None:
     key_value("Why this method", provenance.route_rationale)
     key_value("robots.txt", f"{provenance.robots_status} ({provenance.robots_url or '—'})")
     key_value("User agent", provenance.user_agent)
-    key_value("Pages requested / successful", f"{provenance.pages_requested} / {provenance.pages_successful}")
+    key_value(
+        "Pages requested / successful",
+        f"{provenance.pages_requested} / {provenance.pages_successful}",
+    )
 
     urls = list(dict.fromkeys(outcome.result.source_urls))
     if len(urls) > 1:
         st.markdown(f"**{'Pages collected' if lang == 'en' else 'الصفحات المجمعة'}**")
         st.dataframe(pd.DataFrame({"url": urls}), width="stretch", hide_index=True)
-        graph = crawl_graph.build_graph(
-            crawl_graph.edges_from_sources(urls, outcome.request.url)
-        )
+        graph = crawl_graph.build_graph(crawl_graph.edges_from_sources(urls, outcome.request.url))
         st.plotly_chart(crawl_graph.render(graph), width="stretch")
 
     st.markdown(f"**{'Citation' if lang == 'en' else 'الاقتباس'}**")
@@ -413,7 +423,10 @@ def _diagnostics_tab(outcome, lang: str) -> None:
         st.dataframe(pd.DataFrame(decision.alternatives), width="stretch", hide_index=True)
 
     key_value("Elapsed", f"{outcome.result.elapsed_ms:,} ms")
-    key_value("Fallback chain", ", ".join(outcome.result.metadata.get("fallback_chain", [decision.engine])))
+    key_value(
+        "Fallback chain",
+        ", ".join(outcome.result.metadata.get("fallback_chain", [decision.engine])),
+    )
     key_value("Run id", outcome.run_id)
 
     st.markdown(f"**{'Technical log (sanitized)' if lang == 'en' else 'السجل التقني (منقّح)'}**")

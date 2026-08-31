@@ -26,8 +26,8 @@ DEFAULTS: dict[str, Any] = {
     "preset": "auto",
     "url": "",
     "goal": "",
-    "analysis": None,          # AnalysisOutcome
-    "outcome": None,           # ExtractionOutcome
+    "analysis": None,  # AnalysisOutcome
+    "outcome": None,  # ExtractionOutcome
     "selected_candidate_id": None,
     "step": "source",
     "step_states": {},
@@ -37,6 +37,9 @@ DEFAULTS: dict[str, Any] = {
     "allow_browser": True,
     "allow_cloud": False,
     "allow_ai": False,
+    "ai_provider": None,
+    "allow_agentic": False,
+    "discovery_outcome": None,
     "respect_robots": True,
     "max_pages": 1,
     "max_rows": None,
@@ -88,8 +91,8 @@ def render_stepper() -> None:
         state = states.get(key, "current" if key == current else "not_started")
         st.sidebar.markdown(
             f'<div class="srws-step {css.get(state, "")}">'
-            f'{symbols.get(state, "○")} {index}. {t(label_key, language)}'
-            f'</div>',
+            f"{symbols.get(state, '○')} {index}. {t(label_key, language)}"
+            f"</div>",
             unsafe_allow_html=True,
         )
 

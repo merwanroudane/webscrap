@@ -33,7 +33,9 @@ def parse_sitemap(content: bytes | str) -> tuple[list[str], list[str]]:
     if isinstance(content, str):
         content = content.encode("utf-8", errors="replace")
     try:
-        root = etree.fromstring(content, parser=etree.XMLParser(resolve_entities=False, recover=True))
+        root = etree.fromstring(
+            content, parser=etree.XMLParser(resolve_entities=False, recover=True)
+        )
     except Exception:
         return [], []
     if root is None:

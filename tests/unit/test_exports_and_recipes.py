@@ -187,22 +187,40 @@ def test_generated_code_matches_engine():
     api_script = code_generator.generate(engine="json_api", url="https://x.org/api", recipe=recipe)
     assert "httpx" in api_script and "read_html" not in api_script
 
-    browser_script = code_generator.generate(engine="playwright", url="https://x.org", recipe=recipe)
+    browser_script = code_generator.generate(
+        engine="playwright", url="https://x.org", recipe=recipe
+    )
     assert "sync_playwright" in browser_script
 
 
 # -------------------------------------------------------------------- routing
 def test_registry_reports_honest_status():
     rows = {row.name: row for row in engine_status_table()}
+
+    # Deterministic core is always usable.
     assert rows["table"].state == "ready"
-    assert rows["scrapling"].state == "catalogue"
-    assert "not implemented" in rows["scrapling"].detail.lower()
+
+    # Real adapters exist for these; without their package/key they are
+    # optional or unconfigured, never "ready" and never silently missing.
+    for name in ("scrapling", "scrapegraph", "agentql", "firecrawl", "crawl4ai", "scrapy"):
+        assert rows[name].state in {"ready", "optional", "not_configured"}, name
+        assert rows[name].detail, name
+
+    # Genuinely unimplemented providers say so, with a documented reason.
+    for name in ("apify", "zyte"):
+        assert rows[name].state == "catalogue"
+        assert "not implemented" in rows[name].detail.lower()
+        assert rows[name].notes, f"{name} must document why it is catalogue-only"
 
 
 def test_router_prefers_deterministic_engine_for_a_table():
     request = ExtractionRequest(url="https://example.org/x")
     candidate = CandidateDataset(
-        id="t", kind=DatasetKind.TABLE, title="Table", engine="table", score=0.9,
+        id="t",
+        kind=DatasetKind.TABLE,
+        title="Table",
+        engine="table",
+        score=0.9,
         confidence=Confidence.HIGH,
     )
     engine, decision = router.choose_engine(request, candidate)
@@ -215,7 +233,11 @@ def test_router_prefers_deterministic_engine_for_a_table():
 def test_router_refuses_cloud_when_not_allowed():
     request = ExtractionRequest(url="https://example.org/x", allow_cloud=False)
     candidate = CandidateDataset(
-        id="t", kind=DatasetKind.TABLE, title="T", engine="firecrawl", score=0.95,
+        id="t",
+        kind=DatasetKind.TABLE,
+        title="T",
+        engine="firecrawl",
+        score=0.95,
         confidence=Confidence.HIGH,
     )
     engine, _decision = router.choose_engine(request, candidate)
@@ -225,7 +247,11 @@ def test_router_refuses_cloud_when_not_allowed():
 def test_router_skips_browser_when_disabled():
     request = ExtractionRequest(url="https://example.org/x", allow_browser=False)
     candidate = CandidateDataset(
-        id="t", kind=DatasetKind.REPEATED, title="T", engine="repeated_dom", score=0.8,
+        id="t",
+        kind=DatasetKind.REPEATED,
+        title="T",
+        engine="repeated_dom",
+        score=0.8,
         confidence=Confidence.MEDIUM,
     )
     engine, _decision = router.choose_engine(request, candidate)

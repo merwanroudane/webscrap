@@ -27,13 +27,20 @@ def render() -> None:
 
     records = run_store.list_runs()
     if not records:
-        note(
-            "No previous runs yet." if lang == "en" else "لا توجد عمليات سابقة بعد."
-        )
+        note("No previous runs yet." if lang == "en" else "لا توجد عمليات سابقة بعد.")
     else:
         st.dataframe(
             pd.DataFrame([record.as_dict() for record in records])[
-                ["created_at", "title", "source_url", "engine", "rows", "columns", "recipe_hash", "run_id"]
+                [
+                    "created_at",
+                    "title",
+                    "source_url",
+                    "engine",
+                    "rows",
+                    "columns",
+                    "recipe_hash",
+                    "run_id",
+                ]
             ],
             width="stretch",
             hide_index=True,
@@ -43,7 +50,11 @@ def render() -> None:
             "Select a run" if lang == "en" else "اختر عملية",
             options=[record.run_id for record in records],
             format_func=lambda run_id: next(
-                (f"{r.created_at[:16]} · {r.title or r.source_url}" for r in records if r.run_id == run_id),
+                (
+                    f"{r.created_at[:16]} · {r.title or r.source_url}"
+                    for r in records
+                    if r.run_id == run_id
+                ),
                 run_id,
             ),
         )
@@ -54,7 +65,9 @@ def render() -> None:
                 st.warning("This run has no stored dataset.")
             else:
                 st.session_state["history_frame"] = frame
-        if columns[1].button("Re-run recipe" if lang == "en" else "إعادة تشغيل الوصفة", width="stretch"):
+        if columns[1].button(
+            "Re-run recipe" if lang == "en" else "إعادة تشغيل الوصفة", width="stretch"
+        ):
             recipe = run_store.load_recipe(choice)
             if not recipe:
                 st.warning("This run has no stored recipe.")
