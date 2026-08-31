@@ -18,6 +18,9 @@ exports both the data and everything needed to reproduce and cite it.
 Built from `smart_research_web_scraper_master_plan.md`, which remains the
 authoritative specification for this project.
 
+> **New here? Read the [step-by-step user guide](docs/USER_GUIDE.md)** — every
+> screen explained, with screenshots, for readers who have never scraped a page.
+
 ---
 
 ## What makes it research-grade
@@ -320,6 +323,17 @@ ruff check .
 The test suite runs entirely against a bundled fixture server on `127.0.0.1`,
 so it never depends on a live website. Acceptance scenarios A–G from the
 specification are covered in `tests/integration/test_end_to_end.py`.
+
+### Documentation
+
+| Document | For |
+| --- | --- |
+| [User guide](docs/USER_GUIDE.md) | Researchers — every screen, step by step, with screenshots |
+| [Architecture](docs/architecture.md) | How the code is organised and how a request flows |
+| [Engines](docs/engines.md) | Routing order, scoring, pagination, adding an engine |
+| [Security](docs/security.md) | SSRF guard, robots, prompt injection, secret hygiene |
+| [Deployment](docs/deployment.md) | Docker, servers, configuration, retention |
+| [examples/](examples) | Worked walkthroughs and real recipe files |
 
 ---
 
