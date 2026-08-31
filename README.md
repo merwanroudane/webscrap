@@ -15,11 +15,47 @@ browser automation. Paste a URL, and the app analyses the source, proposes the
 datasets it found, previews them, extracts them, cleans and validates them, and
 exports both the data and everything needed to reproduce and cite it.
 
-Built from `smart_research_web_scraper_master_plan.md`, which remains the
-authoritative specification for this project.
-
 > **New here? Read the [step-by-step user guide](docs/USER_GUIDE.md)** — every
 > screen explained, with screenshots, for readers who have never scraped a page.
+
+![Home page](docs/images/01-home.png)
+
+*Paste a link, optionally say what you need, press Analyze. That is the whole
+requirement in Auto mode.*
+
+---
+
+## See it in action
+
+<table>
+<tr>
+<td width="50%"><img src="docs/images/02-source-analysis.png" alt="Source analysis"></td>
+<td width="50%"><img src="docs/images/04-preflight.png" alt="Preflight summary"></td>
+</tr>
+<tr>
+<td><b>1 · It tells you what it found</b><br>Datasets detected on the page, each with a sample, a confidence badge and the reason it was proposed — plus robots.txt status and estimated difficulty.</td>
+<td><b>2 · It tells you what it will do</b><br>Before any run: the method chosen, pages and requests estimated, <code>AI calls 0</code>, <code>Cloud provider None</code>, and a one-line explanation of why this method.</td>
+</tr>
+<tr>
+<td><img src="docs/images/05-data.png" alt="Data tab"></td>
+<td><img src="docs/images/06-quality-cleaning.png" alt="Quality and cleaning"></td>
+</tr>
+<tr>
+<td><b>3 · You get a real dataset</b><br>Rows, columns, missing cells and duplicates at a glance, then a searchable table with a column chooser and optional row-level source columns.</td>
+<td><b>4 · You clean it on your terms</b><br>Every operation is opt-in and reversible, conversion failures are counted rather than hidden, and outliers are flagged — never deleted.</td>
+</tr>
+<tr>
+<td><img src="docs/images/07-charts.png" alt="Charts"></td>
+<td><img src="docs/images/08-downloads.png" alt="Downloads"></td>
+</tr>
+<tr>
+<td><b>5 · It suggests the right charts</b><br>Recommendations based on your column types, each with a reason, plus a simple builder for anything else.</td>
+<td><b>6 · It exports for your workflow</b><br>CSV, Excel, Parquet, Stata, SPSS, R, SQLite, DuckDB and more — a format is only offered when it can represent your data safely.</td>
+</tr>
+</table>
+
+More screens — sources and provenance, the generated reproducer script, the
+engine inventory — are shown in the [user guide](docs/USER_GUIDE.md).
 
 ---
 
@@ -116,7 +152,7 @@ The router scores every available engine on source fit, determinism,
 reliability, speed, cost and your preferences, then picks the cheapest reliable
 one and records a short rationale you can audit in **Diagnostics**.
 
-Preference order (spec §108): downloadable file → documented public API →
+Preference order: downloadable file → documented public API →
 observed public JSON endpoint → embedded JSON / JSON-LD → HTML table →
 deterministic selectors → static crawl → local browser → adaptive/semantic
 engine → hosted provider. A higher tier is never used because it is fancier.
@@ -153,8 +189,12 @@ The bundled demo needs no internet and always behaves the same way.
    `Tables: 1`, `robots.txt: allowed`, `Estimated difficulty: low`, and proposes
    `Table 1 · Annual inflation rate (%)` with a *High confidence* badge and a
    sample you can expand.
+
+   ![Source analysis](docs/images/02-source-analysis.png)
 3. **Fields** — click **Use this dataset**. Tick the columns you want, rename
    any of them, and press **Preview extraction**.
+
+   ![Field selection](docs/images/03-fields.png)
 4. **Preflight** — before anything large runs you see the scope in plain
    language:
 
@@ -172,6 +212,8 @@ The bundled demo needs no internet and always behaves the same way.
 
 5. **Extract** — the run monitor shows progress per page, then the result
    workspace opens on the **Data** tab.
+
+   ![Data tab](docs/images/05-data.png)
 6. **Clean** — in **Quality**, tick *Convert numeric text to numbers* and
    *Parse percentages*, then **Apply cleaning**. `9.3%` becomes `0.093`, and the
    operations table reports how many cells changed and how many values failed to
@@ -285,7 +327,7 @@ docs/                      architecture, engines, security, deployment
 
 ## Verified behaviour
 
-The acceptance scenarios from the specification run in CI-friendly tests against
+The acceptance scenarios below run in CI-friendly tests against
 a bundled fixture server on `127.0.0.1` — no live website, no flakiness:
 
 | Scenario | Test |
@@ -321,8 +363,8 @@ ruff check .
 ```
 
 The test suite runs entirely against a bundled fixture server on `127.0.0.1`,
-so it never depends on a live website. Acceptance scenarios A–G from the
-specification are covered in `tests/integration/test_end_to_end.py`.
+so it never depends on a live website. The end-to-end acceptance scenarios live
+in `tests/integration/test_end_to_end.py`.
 
 ### Documentation
 

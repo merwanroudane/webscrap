@@ -12,3 +12,6 @@ dist/
 build/
 .pytest_runs/
 .streamlit/secrets.toml
+
+# Internal planning document — kept locally, not published
+smart_research_web_scraper_master_plan.md
