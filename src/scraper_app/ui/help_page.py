@@ -85,3 +85,10 @@ def render() -> None:
     st.caption(
         f"Roudane, M. (2026). Smart Research Web Scraper (Version {APP_VERSION}) [Computer software]."
     )
+    st.markdown(
+        "Released under the **MIT Licence**. The licence covers the software only — "
+        "data you collect stays subject to the source's terms of use, licence and privacy rules."
+        if lang == "en"
+        else "منشور تحت **رخصة MIT**. الرخصة تغطي البرنامج فقط — أما البيانات التي تجمعها "
+        "فتبقى خاضعة لشروط استخدام المصدر وترخيصه وقواعد الخصوصية."
+    )

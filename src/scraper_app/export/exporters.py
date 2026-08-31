@@ -139,7 +139,12 @@ def _check_rds(frame: pd.DataFrame) -> FormatSupport:
     if not base.ok:
         return base
     if not _package_available("pyreadr"):
-        return FormatSupport(False, "RDS export needs pyreadr.", "pip install pyreadr")
+        return FormatSupport(
+            False,
+            "RDS export needs the optional pyreadr package (AGPL-3.0). "
+            "Exporting CSV or Parquet and reading it in R avoids that licence.",
+            "pip install pyreadr",
+        )
     return FormatSupport(True)
 
 

@@ -6,7 +6,22 @@ readme = "README.md"
 requires-python = ">=3.11,<3.14"
 authors = [{ name = "Merwan Roudane", email = "merwanroudane920@gmail.com" }]
 maintainers = [{ name = "Merwan Roudane", email = "merwanroudane920@gmail.com" }]
-license = { text = "MIT" }
+license = { file = "LICENSE" }
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Web Environment",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+  "Topic :: Scientific/Engineering :: Information Analysis",
+  "Topic :: Text Processing :: Markup :: HTML",
+]
+keywords = ["web-scraping", "research", "data-collection", "streamlit", "reproducibility"]
 dependencies = [
   # Kept in step with requirements.txt: only what the application imports.
   "streamlit",
@@ -28,14 +43,15 @@ dependencies = [
   "openpyxl",
   "xlsxwriter",
   "pyreadstat",
-  "pyreadr",
   "plotly",
   "networkx",
 ]
 
 [project.urls]
-Homepage = "https://github.com/merwanroudane"
-Repository = "https://github.com/merwanroudane"
+Homepage = "https://webscrapapp.streamlit.app/"
+Repository = "https://github.com/merwanroudane/webscrap"
+Documentation = "https://github.com/merwanroudane/webscrap/blob/main/docs/USER_GUIDE.md"
+Issues = "https://github.com/merwanroudane/webscrap/issues"
 
 [project.optional-dependencies]
 browser = ["playwright", "selenium"]
@@ -44,7 +60,8 @@ modern = ["crawl4ai", "scrapling[fetchers]"]
 cloud = ["firecrawl-py", "scrapegraph-py>=2.1.0", "agentql", "zyte-api", "apify"]
 agents = ["stagehand", "browser-use", "skyvern"]
 documents = ["docling", "pymupdf"]
-research = ["kaleido", "pytablewriter"]
+# pyreadr is AGPL-3.0: opt-in only, see THIRD_PARTY_LICENSES.md
+research = ["kaleido", "pytablewriter", "pyreadr"]
 dev = [
   "pytest",
   "pytest-asyncio",

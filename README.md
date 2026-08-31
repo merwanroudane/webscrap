@@ -409,15 +409,45 @@ in `tests/integration/test_end_to_end.py`.
 
 ---
 
-## Author and licence
+## Licence
+
+This project is released under the **MIT Licence** — see [LICENSE](LICENSE).
+
+```text
+Copyright (c) 2026 Merwan Roudane
+```
+
+You may use, modify, distribute and sell it, including commercially, provided
+the copyright notice and permission notice are kept. It comes with no warranty.
+
+### The software, not the data
+
+The MIT licence covers **this application only**. Data you collect with it stays
+subject to the source website's terms of use, copyright, database rights,
+licence and any applicable privacy law. Check those before redistributing a
+dataset, and cite the original publisher — the tool is the instrument, not the
+source.
+
+### Third-party licences
+
+Every required dependency is MIT, BSD or Apache-2.0, so the default installation
+is fully compatible with MIT. The full inventory, including which optional
+packages carry copyleft terms and why they are not installed by default, is in
+[THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
+
+Two optional packages are **AGPL-3.0** and therefore opt-in: `pyreadr` (R `.rds`
+export) and `pymupdf` (PDF extraction). The app works without them and says so
+clearly; installing either brings AGPL obligations into your own deployment.
+
+---
+
+## Author and citation
 
 Developed by **Dr Merwan Roudane** — <merwanroudane920@gmail.com> —
 <https://github.com/merwanroudane>.
-
-Released under the MIT licence.
 
 If this tool contributed to a publication, please cite the original data
 publisher first, and mention the tool as:
 
 > Roudane, M. (2026). *Smart Research Web Scraper* (Version 0.1.0) [Computer software].
-> https://github.com/merwanroudane
+> https://github.com/merwanroudane/webscrap

@@ -121,6 +121,14 @@ def render() -> None:
         hide_index=True,
     )
 
+    st.caption(
+        "Optional engines carry their own licences — two of them (pyreadr, pymupdf) are "
+        "AGPL-3.0 and are therefore never installed by default. See THIRD_PARTY_LICENSES.md."
+        if lang == "en"
+        else "المحركات الاختيارية لها تراخيصها الخاصة — اثنان منها (pyreadr، pymupdf) تحت رخصة "
+        "AGPL-3.0 ولذلك لا يتم تثبيتهما افتراضيًا. راجع ملف THIRD_PARTY_LICENSES.md."
+    )
+
     card(
         "Security posture" if lang == "en" else "الوضع الأمني",
         "Every URL and every redirect is checked against the SSRF guard. Private, loopback, "

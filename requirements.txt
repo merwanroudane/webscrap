@@ -4,12 +4,17 @@
 # precedence over pyproject.toml in its search order). It lists only what the
 # application actually imports, so a cloud install stays fast and reliable.
 #
-# Optional engines are NOT here on purpose — the app runs fully without them
+# Every package here is MIT, BSD or Apache-2.0, so the default installation
+# stays compatible with this project's MIT licence. See THIRD_PARTY_LICENSES.md.
+#
+# Optional packages are NOT here on purpose — the app runs fully without them
 # and reports them honestly in Settings -> Engines & keys:
-#   playwright   browser rendering + network API discovery
-#   crawl4ai     local adaptive engine
-#   pymupdf      PDF/document extraction
-#   firecrawl-py hosted extraction (also needs FIRECRAWL_API_KEY)
+#   playwright   browser rendering + network API discovery   (Apache-2.0)
+#   crawl4ai     local adaptive engine                       (Apache-2.0)
+#   firecrawl-py hosted extraction, needs FIRECRAWL_API_KEY   (MIT)
+#   kaleido      export charts as PNG/SVG/PDF                 (MIT)
+#   pymupdf      PDF/document extraction                      (AGPL-3.0)
+#   pyreadr      R .rds export                                (AGPL-3.0)
 
 # --- application ---
 streamlit
@@ -37,7 +42,6 @@ pandera[pandas]
 openpyxl
 xlsxwriter
 pyreadstat
-pyreadr
 
 # --- visualisation ---
 plotly
