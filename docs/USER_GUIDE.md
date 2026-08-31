@@ -111,6 +111,11 @@ internet and no risk. Every screenshot in this guide comes from that demo.
 
 ## 3. Step 1 — Source: give it a link
 
+![The source form](images/12-ai-controls.png)
+
+*The whole first screen. Everything below **Access and privacy options** is
+optional and explained in [section 15](#15-ai-assistance--optional-and-off-by-default).*
+
 | Control | What to put in it |
 | --- | --- |
 | **Website address** | The page that *shows* the data you want. Copy it from your browser's address bar. `https://` is added if you forget it. |
@@ -327,6 +332,8 @@ and the most frequent categories.
 
 ### The Variables tab
 
+![Variables tab](images/18-variables.png)
+
 Your data dictionary: label, dtype, example, missing %, unique count, and — a
 detail that matters for research integrity — **name_source**, telling you whether
 each column name came from the source itself, a heuristic, you, or AI.
@@ -392,6 +399,8 @@ data collection completely.
 
 ## 10. Collecting many pages
 
+![Crawl scope and limits](images/17-crawl-scope.png)
+
 1. On the Preview step, turn on **Follow pagination**.
 2. Set **Maximum pages** — start small (2 or 3) and confirm the result.
 3. Check the preflight card: *Estimated requests* tells you the load you are
@@ -417,6 +426,8 @@ undisturbed publisher are.
 
 ### The Recipe tab
 
+![Recipe tab](images/19-recipe.png)
+
 A readable summary of exactly how the data was collected — source, engine,
 pagination, limits, fields. Download it as JSON or YAML. **Recipes never contain
 passwords, cookies or tokens**, so they are safe to share with a co-author or
@@ -441,6 +452,8 @@ python generated_scraper.py
 
 ### Re-running from History
 
+![History page](images/21-history.png)
+
 The **History** page lists every past run with its date, source, engine, row
 count and recipe hash. Select one and choose:
 
@@ -461,6 +474,8 @@ You can also upload an `extraction_recipe.json` someone sent you and run it.
 | **Guided** | You want to control choices without code | Dataset choice, fields, crawl scope, cleaning, output — all in plain language. |
 | **Advanced** | You know what you want technically | Everything below. |
 
+![Advanced mode controls](images/23-advanced-controls.png)
+
 Advanced mode adds four expanders on the Preview step. Every setting has a safe
 default and a tooltip; you can open one and ignore the rest.
 
@@ -478,6 +493,8 @@ override. Use Advanced mode when detection got something wrong, not by default.
 ---
 
 ## 13. Working in Arabic
+
+![Arabic interface](images/22-arabic.png)
 
 Choose **العربية** in the sidebar. Labels, help text, error messages and the
 workflow stepper switch to Arabic and read right-to-left.
@@ -608,7 +625,10 @@ commands on your behalf.
 
 ## 17. When something goes wrong
 
-Errors are always readable, with the next steps listed. Common ones:
+![A blocked address, explained](images/16-error-panel.png)
+
+Every failure gives you the machine code, a plain-language explanation and a
+short list of things to try — never a traceback. Common ones:
 
 | Message | What it means | What to do |
 | --- | --- | --- |
@@ -625,6 +645,8 @@ Errors are always readable, with the next steps listed. Common ones:
 For deeper diagnosis, open the **Diagnostics** tab: selected engine,
 alternatives considered, fallback chain, timings and a sanitized technical log.
 Raw tracebacks never appear in the interface.
+
+![Diagnostics tab](images/20-diagnostics.png)
 
 ---
 

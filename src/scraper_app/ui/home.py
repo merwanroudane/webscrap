@@ -209,6 +209,7 @@ def render() -> None:
         st.session_state["mode"] = mode
         st.session_state["last_error"] = None
 
+        failure: Exception | None = None
         with st.status(
             "Analyzing the source…" if lang == "en" else "جارٍ تحليل المصدر…", expanded=True
         ) as status:
@@ -244,7 +245,14 @@ def render() -> None:
                 )
                 st.session_state["last_error"] = exc
                 state.mark("source", "review")
-                st.stop()
+                failure = exc
+
+        # The explanation is rendered outside the status container: inside it,
+        # the panel would be hidden the moment the status collapses, leaving the
+        # user with a bare "Analysis failed" line and no next step.
+        if failure is not None:
+            state.show_error(failure)
+            return
 
         state.set_step("detect")
         st.rerun()
