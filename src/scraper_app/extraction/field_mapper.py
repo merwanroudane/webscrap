@@ -35,6 +35,7 @@ def _fuzzy_best(target: str, candidates: list[str]) -> tuple[str | None, float]:
         ratio = difflib.SequenceMatcher(None, target, close[0]).ratio()
         return close[0], ratio
 
+
 #: Reverse index: canonical name -> every phrase that maps to it.
 _SYNONYMS: dict[str, set[str]] = {}
 for _phrase, (_canonical, _dtype) in TERM_MAP.items():
