@@ -90,9 +90,16 @@ def render() -> None:
                 if lang == "en"
                 else "السماح بعرض المتصفح عند الحاجة",
                 value=st.session_state.get("allow_browser", True),
-                help="Runs a local Chromium only when the data is not in the static HTML."
+                help=(
+                    "Used only when the data is not in the plain HTML. A local Chromium is "
+                    "preferred; a configured remote browser is used instead when you select one. "
+                    "Unticking this prevents any browser from running."
+                )
                 if lang == "en"
-                else "يشغّل Chromium محليًا فقط عندما لا تكون البيانات في HTML الثابت.",
+                else (
+                    "يُستخدم فقط عندما لا تكون البيانات في HTML العادي. يُفضّل Chromium المحلي، "
+                    "ويُستخدم متصفح بعيد مضبوط إذا اخترته. إلغاء التحديد يمنع تشغيل أي متصفح."
+                ),
             )
             st.session_state["allow_cloud"] = st.checkbox(
                 "Allow cloud providers (sends page content off this machine)"
@@ -223,7 +230,10 @@ def render() -> None:
                     url,
                     user_goal=goal,
                     respect_robots=st.session_state.get("respect_robots", True),
-                    use_browser=None,
+                    # The researcher's choice governs profiling too: with the
+                    # box unticked, no browser probe may run even on a page
+                    # that looks JavaScript-heavy.
+                    use_browser=None if st.session_state.get("allow_browser", True) else False,
                     preset=preset,
                     allow_ai=st.session_state.get("allow_ai", False),
                     ai_provider=st.session_state.get("ai_provider"),

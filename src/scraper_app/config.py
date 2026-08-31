@@ -157,20 +157,49 @@ CHART_SEQUENCE = [
     "#7FA6E8",
 ]
 
-# Provider environment variables consulted by the capability registry.
-PROVIDER_ENV_KEYS = {
-    "firecrawl": ["FIRECRAWL_API_KEY"],
-    "scrapegraph": ["SGAI_API_KEY"],
-    "agentql": ["AGENTQL_API_KEY"],
-    "browserbase": ["BROWSERBASE_API_KEY", "BROWSERBASE_PROJECT_ID"],
-    "browser_use": ["BROWSER_USE_API_KEY"],
-    "skyvern": ["SKYVERN_API_KEY"],
-    "apify": ["APIFY_API_TOKEN"],
-    "zyte": ["ZYTE_API_KEY"],
-    "anthropic": ["ANTHROPIC_API_KEY"],
-    "openai": ["OPENAI_API_KEY"],
-    "google": ["GOOGLE_API_KEY"],
-}
+
+# Provider credentials are declared once in scraper_app.credentials. This view
+# exists so config-level callers keep working without a second hand-written
+# list that can drift from the code (audit v0.2 section 24).
+def _provider_env_keys() -> dict[str, list[str]]:
+    from .credentials import ALL_CREDENTIALS
+
+    return {spec.id: list(spec.env_vars) for spec in ALL_CREDENTIALS if spec.env_vars}
+
+
+class _ProviderEnvKeys(dict):
+    """Lazy, always-current mapping of provider id -> required env vars."""
+
+    def _refresh(self) -> None:
+        self.clear()
+        self.update(_provider_env_keys())
+
+    def __getitem__(self, key):  # pragma: no cover - trivial
+        self._refresh()
+        return super().__getitem__(key)
+
+    def get(self, key, default=None):
+        self._refresh()
+        return super().get(key, default)
+
+    def items(self):
+        self._refresh()
+        return super().items()
+
+    def keys(self):
+        self._refresh()
+        return super().keys()
+
+    def __iter__(self):
+        self._refresh()
+        return super().__iter__()
+
+    def __len__(self):
+        self._refresh()
+        return super().__len__()
+
+
+PROVIDER_ENV_KEYS = _ProviderEnvKeys()
 
 
 def has_credentials(provider: str) -> bool:

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 
+from .. import capabilities
 from ..base import AIAvailability, Completion, LLMProvider, Usage
 
 #: Any one of these being present is enough for LiteLLM to reach some backend.
@@ -45,7 +46,7 @@ class LiteLLMProvider(LLMProvider):
         system: str | None = None,
         model: str | None = None,
         max_tokens: int = 1500,
-        temperature: float = 0.0,
+        temperature: float | None = None,
     ) -> Completion:  # pragma: no cover - requires credentials
         import litellm
 
@@ -55,11 +56,12 @@ class LiteLLMProvider(LLMProvider):
         messages.append({"role": "user", "content": prompt})
 
         chosen = model or self.default_model
+        sampling = capabilities.for_model(chosen).sampling_kwargs(temperature)
         response = litellm.completion(
             model=chosen,
             messages=messages,
             max_tokens=max_tokens,
-            temperature=temperature,
+            **sampling,
         )
         text = response["choices"][0]["message"]["content"] or ""
         usage_obj = response.get("usage") or {}

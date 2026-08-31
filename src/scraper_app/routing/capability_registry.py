@@ -351,7 +351,6 @@ CATALOGUE_PROVIDERS: list[ProviderInfo] = [
         "metered",
         False,
         package="apify",
-        credential="apify",
         docs="https://github.com/apify/apify-sdk-python",
         notes="Actor-based platform: each actor has its own input schema, so a generic "
         "adapter would misrepresent it. Use Crawlee locally, or call a specific actor.",
@@ -363,7 +362,6 @@ CATALOGUE_PROVIDERS: list[ProviderInfo] = [
         "metered",
         False,
         package="zyte_api",
-        credential="zyte",
         docs="https://github.com/zytedata/python-zyte-api",
         notes="Overlaps entirely with the managed fetch providers already implemented; "
         "left out to avoid a redundant metered path.",

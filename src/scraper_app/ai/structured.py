@@ -133,11 +133,12 @@ def call_structured[T: BaseModel](
     prompt = "\n\n".join(parts)
 
     try:
+        # No temperature is requested: determinism is asked for in the prompt,
+        # and the current Anthropic models reject sampling parameters outright.
         completion: Completion = provider.complete(
             prompt,
             system=SYSTEM_PROMPT,
             max_tokens=max_tokens,
-            temperature=0.0,
         )
     except Exception as exc:  # provider/network failure must never propagate
         return StructuredResult(error=f"The AI provider failed ({exc.__class__.__name__}).")

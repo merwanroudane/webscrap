@@ -128,9 +128,13 @@ class LLMProvider(ABC):
         system: str | None = None,
         model: str | None = None,
         max_tokens: int = 1500,
-        temperature: float = 0.0,
+        temperature: float | None = None,
     ) -> Completion:
-        """Return one completion. Implementations must not retry indefinitely."""
+        """Return one completion. Implementations must not retry indefinitely.
+
+        ``temperature`` is a request, not a guarantee: a provider must drop it
+        for a model that rejects sampling parameters rather than fail the call.
+        """
 
     # ------------------------------------------------------------------ helpers
     def describe(self) -> dict[str, Any]:

@@ -59,11 +59,34 @@ your decision, and its licence then applies to your installation.
 | Package | Licence | Feature it enables |
 | --- | --- | --- |
 | playwright | Apache-2.0 | Browser rendering and network API discovery |
+| selenium | Apache-2.0 | Compatibility browser path |
+| scrapy | BSD-3-Clause | Bounded multi-page crawling |
+| crawlee | Apache-2.0 | Bounded crawling through a request queue |
 | crawl4ai | Apache-2.0 | Local adaptive extraction engine |
-| pymupdf | AGPL-3.0-or-later (commercial licence available) | PDF/document extraction |
+| scrapling | BSD-3-Clause | Adaptive selector recovery |
 | firecrawl-py | MIT | Hosted extraction provider (also needs an API key) |
+| scrapegraph-py | MIT | Hosted AI extraction (also needs an API key) |
+| agentql | MIT | Semantic element queries (the REST path needs only a key) |
+| stagehand | MIT | Agentic browser workflows |
+| browser-use | MIT | Agentic browser workflows |
+| skyvern | AGPL-3.0 | Hosted agentic workflows (the REST path needs only a key) |
+| anthropic | MIT | Anthropic model provider |
+| openai | Apache-2.0 | OpenAI model provider |
+| google-genai | Apache-2.0 | Google Gemini model provider |
+| litellm | MIT | Multi-backend model routing |
+| instructor | MIT | Optional structured-output helper |
+| rapidfuzz | MIT | Better fuzzy field matching |
+| dateparser | BSD-3-Clause | Multilingual date parsing |
+| ftfy | Apache-2.0 | Repairing mojibake in scraped text |
+| tldextract | BSD-3-Clause | Registrable-domain comparison |
+| docling | MIT | Layout-aware document extraction |
 | kaleido | MIT | Exporting charts as PNG/SVG/PDF |
+| **pymupdf** | **AGPL-3.0-or-later** (commercial licence available) | PDF/document extraction |
 | **pyreadr** | **AGPL-3.0-or-later** | Exporting datasets as R `.rds` |
+
+Licences are as published by each project at the time of writing; each package's
+own metadata is authoritative. The `skyvern` **package** is AGPL-3.0, which is
+why the adapter here talks to the hosted REST API and does not import it.
 
 ### Why pyreadr and pymupdf are not installed by default
 

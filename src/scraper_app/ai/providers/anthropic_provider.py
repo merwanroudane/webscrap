@@ -1,16 +1,22 @@
-"""Anthropic provider (optional)."""
+"""Anthropic provider (optional).
+
+Claude Sonnet 5 and the other current models return a 400 error when
+``temperature``, ``top_p`` or ``top_k`` is set, so sampling parameters are only
+sent to models that accept them. See :mod:`scraper_app.ai.capabilities`.
+"""
 
 from __future__ import annotations
 
 import os
 
+from .. import capabilities
 from ..base import Completion, LLMProvider, Usage
 
 
 class AnthropicProvider(LLMProvider):
     name = "anthropic"
     label = "Anthropic Claude"
-    default_model = "claude-sonnet-5"
+    default_model = os.getenv("SRWS_ANTHROPIC_MODEL", "claude-sonnet-5")
     credential = "anthropic"
     package = "anthropic"
     install_hint = "pip install anthropic"
@@ -23,18 +29,19 @@ class AnthropicProvider(LLMProvider):
         system: str | None = None,
         model: str | None = None,
         max_tokens: int = 1500,
-        temperature: float = 0.0,
+        temperature: float | None = None,
     ) -> Completion:  # pragma: no cover - requires credentials
         import anthropic
 
         client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
         chosen = model or self.default_model
+        sampling = capabilities.for_model(chosen).sampling_kwargs(temperature)
         message = client.messages.create(
             model=chosen,
             max_tokens=max_tokens,
-            temperature=temperature,
             system=system or "",
             messages=[{"role": "user", "content": prompt}],
+            **sampling,
         )
         text = "".join(block.text for block in message.content if hasattr(block, "text"))
         usage = Usage(

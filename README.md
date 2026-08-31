@@ -160,7 +160,7 @@ command. Install a group with `pip install -e ".[group]"`.
 | `ai` | Anthropic / OpenAI / Google / LiteLLM + Instructor |
 | `cloud` | Firecrawl, ScrapeGraphAI, AgentQL |
 | `agents` | Stagehand, Browser Use, Skyvern |
-| `documents` | PyMuPDF and Docling (both AGPL-3.0) |
+| `documents` | PyMuPDF (AGPL-3.0) and Docling (MIT) |
 | `helpers` | rapidfuzz, dateparser, ftfy, tldextract, sitemap parsing |
 | `research` | kaleido, pytablewriter, pyreadr (AGPL-3.0) |
 | `all-local` | Every free, local, permissively licensed extra at once |
@@ -251,8 +251,11 @@ for analysis. Discovery never starts a crawl by itself.
 
 **AI layer** — provider-independent, off by default. Deterministic parsing is
 always tried first; a model may propose field names, map leftover fields, or
-extract records only when you enable it. Every reply is schema-validated and
-checked against evidence in the page, so an invented value cannot become a row.
+extract records only when you enable it. Every reply is schema-validated, and
+**every extracted cell is checked against the page** with type-aware matching
+(`9.3%`, `0.093` and `9,3 %` count as the same value). An unsupported cell is
+blanked rather than shown as data, and a record with nothing left is dropped —
+so an invented value cannot become a row.
 
 Two providers are catalogued rather than implemented, each with a documented
 reason: **Apify** (actor-specific input schemas make a generic adapter
@@ -433,7 +436,7 @@ file back and compare), recipe round-trips, generated-code compilation and
 router policy.
 
 ```bash
-pytest -q          # 92 passed
+pytest -q          # 138 passed
 ruff check .       # All checks passed!
 ```
 
@@ -517,5 +520,5 @@ Developed by **Dr Merwan Roudane** — <merwanroudane920@gmail.com> —
 If this tool contributed to a publication, please cite the original data
 publisher first, and mention the tool as:
 
-> Roudane, M. (2026). *Smart Research Web Scraper* (Version 0.1.0) [Computer software].
+> Roudane, M. (2026). *Smart Research Web Scraper* (Version 0.2.0) [Computer software].
 > https://github.com/merwanroudane/webscrap

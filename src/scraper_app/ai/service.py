@@ -18,6 +18,7 @@ from typing import Any
 
 from ..models import Confidence, ExtractionSchema, FieldSpec, NameSource
 from .base import AIMode, LLMProvider, Usage
+from .evidence import check_records, check_values
 from .models import (
     DataDictionaryProposal,
     ExtractedRecords,
@@ -29,7 +30,7 @@ from .providers.anthropic_provider import AnthropicProvider
 from .providers.google_provider import GoogleProvider
 from .providers.litellm_provider import LiteLLMProvider
 from .providers.openai_provider import OpenAIProvider
-from .structured import call_structured, evidence_ratio
+from .structured import call_structured
 
 #: Order matters: the first configured provider wins when none is requested.
 PROVIDER_ORDER: list[type[LLMProvider]] = [
@@ -39,9 +40,14 @@ PROVIDER_ORDER: list[type[LLMProvider]] = [
     LiteLLMProvider,
 ]
 
-#: A proposal is rejected when fewer than this fraction of its values appear
-#: in the page content the model was shown.
-MIN_EVIDENCE_RATIO = 0.5
+#: Schema *proposals* are semantic inference: a field label may legitimately be
+#: worded differently from the page, so a majority of supporting values is
+#: enough to accept the proposal, and each field carries its own confidence.
+MIN_SCHEMA_EVIDENCE_RATIO = 0.5
+
+#: Extracted *records* are factual claims and are held to a stricter rule:
+#: every cell must be supported by the page or it is blanked, and a record with
+#: nothing left is dropped. See :mod:`scraper_app.ai.evidence`.
 
 
 @dataclass
@@ -131,9 +137,9 @@ def propose_schema(
     if not proposal.fields:
         return None
 
-    # Reject a proposal whose evidence does not appear in the page.
-    ratio = evidence_ratio([f.evidence for f in proposal.fields if f.evidence], page_content)
-    if ratio < MIN_EVIDENCE_RATIO:
+    # Reject a proposal whose supporting values are not in the page at all.
+    report = check_values([f.evidence for f in proposal.fields if f.evidence], page_content)
+    if report.total and report.ratio < MIN_SCHEMA_EVIDENCE_RATIO:
         return None
 
     return ExtractionSchema(
@@ -236,10 +242,23 @@ def extract_records(
     if not extracted.records:
         return None
 
-    flat_values = [str(v) for row in extracted.records[:20] for v in row.values() if v is not None]
-    if evidence_ratio(flat_values, page_content) < MIN_EVIDENCE_RATIO:
+    # Every extracted cell is a factual claim, so each one must be supported by
+    # the page. Unsupported cells are blanked rather than presented as data, and
+    # a record left with nothing is dropped.
+    report, cleaned = check_records([dict(row) for row in extracted.records], page_content)
+    surviving = [row for row in cleaned if any(v not in (None, "") for v in row.values())]
+
+    if not surviving:
         return None
-    return [dict(row) for row in extracted.records]
+    if usage_log is not None and report.unsupported_values:
+        usage_log.entries.append(
+            {
+                "purpose": "evidence_check",
+                "unsupported_cells": len(report.unsupported_values),
+                "checked_cells": report.total,
+            }
+        )
+    return surviving
 
 
 def review_extraction(

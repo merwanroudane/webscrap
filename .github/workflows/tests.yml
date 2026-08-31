@@ -62,6 +62,10 @@ jobs:
       - name: A missing optional package must not break the app
         run: uv run python scripts/check_core_only.py
 
+      # Every provider key the code reads must be documented for the user.
+      - name: .env.example is in sync with the credential registry
+        run: uv run python scripts/sync_env_example.py --check
+
   lockfile:
     name: uv.lock is current
     runs-on: ubuntu-latest

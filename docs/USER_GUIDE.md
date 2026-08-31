@@ -48,7 +48,7 @@ machine, run history is preserved, and every engine is available.
 
 ### Install locally
 
-You need Python 3.11 or newer (3.12 recommended). Open a terminal and run:
+You need Python 3.12 or 3.13. Open a terminal and run:
 
 ```bash
 git clone https://github.com/merwanroudane/webscrap.git
@@ -562,9 +562,11 @@ switch it on. Open **Access and privacy options** on the Source page:
 
 * **Deterministic first, always.** A table a parser can read is never sent to a
   model.
-* **Evidence checking.** Every value a model proposes is looked for in the page
-  it was shown. If the values are not there, the whole proposal is rejected — an
-  invented row cannot reach your dataset.
+* **Evidence checking.** Every extracted cell is looked for in the page the
+  model was shown, with type-aware matching so `9.3%`, `0.093` and `9,3 %` count
+  as the same value. A cell that cannot be found is blanked rather than shown as
+  data, and a record with nothing left is dropped. An invented value cannot
+  reach your dataset.
 * **Schema validation.** Replies are parsed into a strict shape; anything
   malformed is discarded.
 * **Bounded, wrapped excerpts.** Only a small slice of the page is sent, wrapped
