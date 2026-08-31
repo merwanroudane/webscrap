@@ -22,7 +22,7 @@ RUNS_DIR = Path(os.getenv("SRWS_RUNS_DIR", PROJECT_ROOT / "runs"))
 CACHE_DIR = Path(os.getenv("SRWS_CACHE_DIR", PROJECT_ROOT / ".cache"))
 
 APP_NAME = "Smart Research Web Scraper"
-APP_VERSION = "0.1.0"
+APP_VERSION = "0.2.0"
 APP_AUTHOR = "Dr Merwan Roudane"
 APP_AUTHOR_EMAIL = "merwanroudane920@gmail.com"
 APP_AUTHOR_URL = "https://github.com/merwanroudane"
