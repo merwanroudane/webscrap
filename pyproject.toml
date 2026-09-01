@@ -1,6 +1,6 @@
 [project]
 name = "smart-research-web-scraper"
-version = "0.2.0"
+version = "0.2.1"
 description = "Research-oriented Streamlit application that turns web pages into analysis-ready datasets."
 readme = "README.md"
 requires-python = ">=3.12,<3.14"

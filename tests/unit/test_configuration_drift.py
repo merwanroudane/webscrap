@@ -126,3 +126,54 @@ def test_dangerous_setting_is_documented_as_dangerous():
     spec = next(s for s in credentials.SETTINGS_SPECS if s.name == "SRWS_ALLOW_PRIVATE_NETWORKS")
     assert "DANGEROUS" in spec.description
     assert "SRWS_ALLOW_PRIVATE_NETWORKS" in ENV_EXAMPLE.read_text(encoding="utf-8")
+
+
+# ---------------------------------------------------------------- version drift
+# The version is declared in four places and stamped into every provenance
+# manifest. When they disagree, a dataset claims to come from a build that never
+# existed — which is the one thing a provenance record must never do.
+def _pyproject_version() -> str:
+    text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    match = re.search(r'^version\s*=\s*"([^"]+)"', text, flags=re.MULTILINE)
+    assert match, "pyproject.toml declares no version"
+    return match.group(1)
+
+
+def test_the_package_and_project_versions_agree():
+    from scraper_app.config import APP_VERSION
+
+    assert APP_VERSION == _pyproject_version()
+
+
+def test_the_citation_file_matches_the_release():
+    from scraper_app.config import APP_VERSION
+
+    text = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
+    versions = set(re.findall(r"^\s*version:\s*(\S+)", text, flags=re.MULTILINE))
+    assert versions == {APP_VERSION}, f"CITATION.cff says {versions}, code says {APP_VERSION}"
+
+
+def test_the_changelog_documents_this_release():
+    """A version bump without an entry tells a user nothing about what changed."""
+    from scraper_app.config import APP_VERSION
+
+    changelog = ROOT / "CHANGELOG.md"
+    assert changelog.exists(), "CHANGELOG.md is missing"
+    assert re.search(
+        rf"^##\s+{re.escape(APP_VERSION)}\b", changelog.read_text(encoding="utf-8"), re.MULTILINE
+    ), f"CHANGELOG.md has no section for {APP_VERSION}"
+
+
+def test_the_readme_cites_the_current_version():
+    from scraper_app.config import APP_VERSION
+
+    text = (ROOT / "README.md").read_text(encoding="utf-8")
+    cited = set(re.findall(r"\(Version ([0-9][^)]*)\)", text))
+    assert cited in ({APP_VERSION}, set()), f"README cites {cited}, code says {APP_VERSION}"
+
+
+def test_the_user_agent_carries_the_version():
+    """Site owners identify this tool by its user agent; it must be truthful."""
+    from scraper_app.config import APP_VERSION, SETTINGS
+
+    assert APP_VERSION in SETTINGS.user_agent

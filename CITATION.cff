@@ -25,8 +25,8 @@ keywords:
   - data collection
   - streamlit
 license: MIT
-version: 0.2.0
-date-released: '2026-08-31'
+version: 0.2.1
+date-released: '2026-09-01'
 preferred-citation:
   type: software
   title: 'Smart Research Web Scraper: reproducible web data collection for researchers'
@@ -34,7 +34,7 @@ preferred-citation:
     - given-names: Merwan
       family-names: Roudane
       email: merwanroudane920@gmail.com
-  version: 0.2.0
+  version: 0.2.1
   year: 2026
   url: https://github.com/merwanroudane/webscrap
   license: MIT

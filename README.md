@@ -524,5 +524,5 @@ Developed by **Dr Merwan Roudane** — <merwanroudane920@gmail.com> —
 If this tool contributed to a publication, please cite the original data
 publisher first, and mention the tool as:
 
-> Roudane, M. (2026). *Smart Research Web Scraper* (Version 0.2.0) [Computer software].
+> Roudane, M. (2026). *Smart Research Web Scraper* (Version 0.2.1) [Computer software].
 > https://github.com/merwanroudane/webscrap
